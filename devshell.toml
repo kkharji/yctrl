@@ -1,0 +1,22 @@
+[devshell]
+name = "yabaictrl-dev-shell"
+
+packages = [ "cargo", "rustc", "rustPackages.clippy" ]
+
+[[commands]]
+name = "run"
+help = "run main bin"
+category = "Main"
+command = "./result/bin/yabaictrl $@"
+
+[[commands]]
+name = "brun"
+help = "build and run main bin"
+category = "Main"
+command = "nix build && ./result/bin/yabaictrl $@"
+
+[[commands]]
+name = "build"
+help = "run nix build"
+category = "Main"
+command = "nix build $@"
