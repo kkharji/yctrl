@@ -1,7 +1,7 @@
 [devshell]
 name = "yabaictrl-dev-shell"
 
-packages = [ "cargo", "rustc", "rustPackages.clippy" ]
+# packages = [ "cargo", "rustc", "rustPackages.clippy" ]
 
 [[commands]]
 name = "run"
