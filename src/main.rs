@@ -113,7 +113,7 @@ fn should_just_redirect<A>(cmd: &str, _args: &[A]) -> bool
 where
     A: AsRef<[u8]> + Debug,
 {
-    return cmd != "focus" && cmd != "swap" && cmd != "move" && cmd != "warp";
+    return cmd != "focus" && cmd != "swap" && cmd != "move" && cmd != "warp" && cmd != "space";
 }
 
 fn main() -> Result<()> {
@@ -153,7 +153,37 @@ fn main() -> Result<()> {
 
 struct Window();
 impl Window {
+    fn handle_space_subcommand(socket_path: String, args: Vec<String>) -> Result<()> {
+        let select = args.last().unwrap();
+        let command = args[1].clone();
+        let space_args = vec!["space".to_string(), "--focus".to_string(), select.clone()];
+
+        // Only further process next/prev, if not run the command as it.
+        if select != "next" && select != "prev" {
+            if execute(&socket_path, &args).is_ok() {
+                return Space::handle_request(socket_path, space_args);
+            };
+        }
+
+        // Try to execute as is
+        if execute(&socket_path, &args).is_ok() {
+            return Space::handle_request(socket_path, space_args);
+        }
+
+        // Try position rather than order
+        let pos = if select == "next" { "first" } else { "last" };
+        if execute(&socket_path, &["window", &command, pos]).is_ok() {
+            return Space::handle_request(socket_path, space_args);
+        }
+
+        bail!("Fail handle space command!!! {:?}", args)
+    }
+
     fn handle_request(socket_path: String, args: Vec<String>) -> Result<()> {
+        if &args[1] == "--space" {
+            return Self::handle_space_subcommand(socket_path, args);
+        };
+
         let select = args.last().unwrap().as_str();
         let command = args[1].clone();
 
@@ -211,16 +241,15 @@ impl Space {
     fn handle_request(socket_path: String, args: Vec<String>) -> Result<()> {
         let select = args.last().unwrap();
 
-        // Only further process next/prev, if not run the command as it.
-        if select != "next" && select != "prev" {
-            println!("got {:?} ... redirecting to yabai socket", select);
-            execute(&socket_path, &args)
-        } else {
-            // See if next/prev just works before doing anything else.
-            execute(&socket_path, &args).or_else(|_| {
-                let pos = if select == "next" { "first" } else { "last" };
-                execute(&socket_path, &["space", &args[1], pos])
-            })
+        // Only further process when select != next/prev and succeeded
+        if select != "next" && select != "prev" && execute(&socket_path, &args).is_ok() {
+            return Ok(());
         }
+
+        // See if next/prev just works before doing anything else.
+        execute(&socket_path, &args).or_else(|_| {
+            let pos = if select == "next" { "first" } else { "last" };
+            execute(&socket_path, &["space", &args[1], pos])
+        })
     }
 }
