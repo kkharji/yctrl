@@ -4,16 +4,16 @@ name = "yctrl-dev-shell"
 # packages = [ "cargo-watch" ]
 
 [[commands]]
-name = "run"
+name = "yctrl"
 help = "run main bin"
 category = "Main"
 command = "./result/bin/yctrl $@"
 
 [[commands]]
-name = "brun"
+name = "byctrl"
 help = "build and run main bin"
 category = "Main"
-command = "nix build && ./result/bin/yctrl $@"
+command = "nix run $@"
 
 [[commands]]
 name = "build"
