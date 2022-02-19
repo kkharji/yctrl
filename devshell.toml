@@ -1,5 +1,5 @@
 [devshell]
-name = "yabaictrl-dev-shell"
+name = "yctrl-dev-shell"
 
 # packages = [ "cargo-watch" ]
 
@@ -7,13 +7,13 @@ name = "yabaictrl-dev-shell"
 name = "run"
 help = "run main bin"
 category = "Main"
-command = "./result/bin/yabaictrl $@"
+command = "./result/bin/yctrl $@"
 
 [[commands]]
 name = "brun"
 help = "build and run main bin"
 category = "Main"
-command = "nix build && ./result/bin/yabaictrl $@"
+command = "nix build && ./result/bin/yctrl $@"
 
 [[commands]]
 name = "build"
