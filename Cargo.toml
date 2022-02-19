@@ -1,10 +1,20 @@
 [package]
 name = "yctrl"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
+license = "MIT"
+repository="https://github.com/tami5/yctrl"
+readme = "README.md"
+description = "Thin wrapper around yabai that adds convenient and intuitive fixes"
+keywords = [
+  "macos",
+  "yabai",
+  "window_manager",
+  "cli",
+]
 
 [dependencies]
-anyhow = "^1.0.42"
+anyhow = "1.0.42"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
