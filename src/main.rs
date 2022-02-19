@@ -54,6 +54,7 @@ fn should_just_redirect<A: AsRef<[u8]> + Debug>(cmd: &str, _args: &[A]) -> bool 
         && cmd != "warp"
         && cmd != "space"
         && cmd != "inc"
+        && cmd != "make"
 }
 
 struct Window();
@@ -82,6 +83,26 @@ impl Window {
         bail!("Fail handle space command!!! {:?}", args)
     }
 
+    /// Toggle between largest and smallest window.
+    /// TODO: Switch between left space and child windows
+    fn master(socket_path: String) -> Result<()> {
+        execute(&socket_path, &["window", "--warp", "first"])
+            .or_else(|_| execute(&socket_path, &["window", "--warp", "last"]))
+        // let windows: Vec<YabaiWindow> = query(&socket_path, QUERY_SPACE_WINDOWS)?;
+        // let current = windows.iter().find(|w| w.has_focus).unwrap();
+        // let largest = windows.iter().max_by_key(|&w| w.frame.sum()).unwrap();
+        // eprintln!("largest = {:#?}", largest);
+        // eprintln!("total = {:#?}", largest.frame.sum());
+        // let mut partial_args = vec!["window".to_string(), "--warp".to_string()];
+        // if largest.id == current.id {
+        //     partial_args.push("next".to_string());
+        //     Self::handle(socket_path, partial_args)
+        // } else {
+        //     partial_args.push(largest.id.to_string());
+        //     Self::handle(socket_path, partial_args)
+        // }
+    }
+
     fn inc(socket_path: String, args: Vec<String>) -> Result<()> {
         let left = args.last().unwrap() == "left";
         let dir = if left { "-150:0" } else { "+150:0" };
@@ -97,9 +118,10 @@ impl Window {
 
     fn handle(socket_path: String, args: Vec<String>) -> Result<()> {
         // Handle special cases
-        match args[1].as_str() {
-            "--space" => return Self::space(socket_path, args),
-            "--inc" => return Self::inc(socket_path, args),
+        match (args[1].as_str(), args[2].as_str()) {
+            ("--space", _) => return Self::space(socket_path, args),
+            ("--inc", _) => return Self::inc(socket_path, args),
+            ("--make", "master") => return Self::master(socket_path),
             _ => (),
         };
 

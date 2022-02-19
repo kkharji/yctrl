@@ -32,10 +32,17 @@ pub struct YabaiDisplay {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Frame {
-    x: f32,
-    y: f32,
-    w: f32,
-    h: f32,
+    pub x: f32,
+    pub y: f32,
+    pub w: f32,
+    pub h: f32,
+}
+
+impl Frame {
+    /// Return the sum of w * h
+    pub fn sum(self: &Self) -> u32 {
+        return (self.w.round() as u32) + (self.h.round() as u32);
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
