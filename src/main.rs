@@ -24,7 +24,7 @@ fn main() -> Result<()> {
 
     // Fix when the user provided id for sub command.
     let mut command_pos = 1;
-    if let Ok(_) = args[1].as_str().parse::<u32>() {
+    if args[1].as_str().parse::<u32>().is_ok() {
         command_pos = 2;
     }
 
@@ -64,10 +64,8 @@ impl Window {
         let space_args = vec!["space".to_string(), "--focus".to_string(), select.clone()];
 
         // Only further process next/prev, if not run the command as it.
-        if select != "next" && select != "prev" {
-            if execute(&socket_path, &args).is_ok() {
-                return Space::handle(socket_path, space_args);
-            };
+        if select != "next" && select != "prev" && execute(&socket_path, &args).is_ok() {
+            return Space::handle(socket_path, space_args);
         }
 
         // Try to execute as is
@@ -132,7 +130,7 @@ impl Window {
                 .filter(|w| w.subrole != "AXUnknown.Hammerspoon" && w.is_visible && !w.has_focus)
                 .collect::<Vec<YabaiWindow>>();
 
-            if windows.len() == 0 {
+            if windows.is_empty() {
                 println!("No windows left in space, trying {select} space instead of window");
                 let args = vec!["space".to_string(), command, select.to_string()];
                 return Space::handle(socket_path, args);
@@ -201,7 +199,7 @@ where
         anyhow::bail!(
             "Yabai: {} {:?}",
             String::from_utf8_lossy(&buf[1..]).trim(),
-            args.to_owned()
+            args
         );
     }
 
@@ -245,8 +243,8 @@ where
     A: AsRef<[u8]> + Debug,
 {
     loop {
-        let raw = request(&socket_path, args)?;
         // NOTE: According to @slam, sometime queries return empty string.
+        let raw = request(socket_path, args)?;
         if raw.is_empty() {
             eprintln!("{:?} returned an empty string, retrying", args);
             continue;
