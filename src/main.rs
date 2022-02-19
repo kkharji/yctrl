@@ -109,11 +109,13 @@ impl CommandScope {
     }
 }
 
-fn should_just_redirect<A>(cmd: &str, _args: &[A]) -> bool
-where
-    A: AsRef<[u8]> + Debug,
-{
-    return cmd != "focus" && cmd != "swap" && cmd != "move" && cmd != "warp" && cmd != "space";
+fn should_just_redirect<A: AsRef<[u8]> + Debug>(cmd: &str, _args: &[A]) -> bool {
+    cmd != "focus"
+        && cmd != "swap"
+        && cmd != "move"
+        && cmd != "warp"
+        && cmd != "space"
+        && cmd != "inc"
 }
 
 fn main() -> Result<()> {
@@ -179,9 +181,23 @@ impl Window {
         bail!("Fail handle space command!!! {:?}", args)
     }
 
+    fn handle_inc_request(socket_path: String, args: Vec<String>) -> Result<()> {
+        let dir = if args.last().unwrap() == "left" {
+            "-150:0"
+        } else {
+            "+150:0"
+        };
+
+        execute(&socket_path, &["window", "--resize", "left:", dir])
+            .or_else(|_| execute(&socket_path, &["window", "--resize", "right:", dir]))
+    }
+
     fn handle_request(socket_path: String, args: Vec<String>) -> Result<()> {
-        if &args[1] == "--space" {
-            return Self::handle_space_subcommand(socket_path, args);
+        // Handle special cases
+        match args[1].as_str() {
+            "--space" => return Self::handle_space_subcommand(socket_path, args),
+            "--inc" => return Self::handle_inc_request(socket_path, args),
+            _ => (),
         };
 
         let select = args.last().unwrap().as_str();
