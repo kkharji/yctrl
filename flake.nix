@@ -23,7 +23,10 @@
         };
         naersk = pkgs.callPackage naersk-lib { };
       in {
-        defaultPackage = naersk.buildPackage ./.;
+        defaultPackage = naersk.buildPackage {
+          pname = "yctrl";
+          root = ./.;
+        };
         defaultApp = utils.lib.mkApp { drv = self.defaultPackage."${system}"; };
         overlay = f: p: { yctrl = self.defaultPackage."${system}"; };
         devShell = pkgs.devshell.mkShell {
