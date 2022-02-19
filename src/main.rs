@@ -1,5 +1,5 @@
 use self::models::{YabaiSpace, YabaiWindow};
-use crate::constants::QUERY_SPACE_WINDOWS;
+use crate::constants::{QUERY_CURRENT_SPACE, QUERY_SPACE_WINDOWS};
 use anyhow::{bail, Context, Result};
 use serde::de::DeserializeOwned;
 use std::{
@@ -11,7 +11,7 @@ use std::{
 mod constants;
 mod models;
 
-/// Send request to yabai socket.
+/// Send request to yabai socket and return string.
 pub fn request<A>(socket_path: &str, args: &[A]) -> Result<String>
 where
     A: AsRef<[u8]> + Debug,
@@ -42,6 +42,37 @@ where
     }
 
     Ok(String::from_utf8(buf)?)
+}
+
+/// Send request to yabai socket.
+pub fn execute<A>(socket_path: &str, args: &[A]) -> Result<()>
+where
+    A: AsRef<[u8]> + Debug,
+{
+    let mut buf = [0; 1];
+    let mut stream = UnixStream::connect(socket_path)?;
+
+    stream.set_nonblocking(false)?;
+
+    for arg in args.iter().map(AsRef::as_ref) {
+        if arg.contains(&b'\0') {
+            bail!("Internal: Unexpected NUL byte in arg: {arg:?}");
+        }
+        stream.write_all(arg)?;
+        stream.write_all(b"\0")?;
+    }
+
+    stream.write_all(b"\0")?;
+    stream.flush()?;
+
+    // Ignore if yabai return nothing.
+    stream.read_exact(&mut buf).ok();
+
+    if buf.get(0) == Some(&7) {
+        bail!("Yabai: fail to execute {:?}", args)
+    }
+
+    Ok(())
 }
 
 pub fn query<T, A>(socket_path: &str, args: &[A]) -> Result<T>
@@ -110,13 +141,13 @@ fn main() -> Result<()> {
     // Redirect if these isn't the command given
     if should_just_redirect(&cmd, &args) {
         println!("redircting '{:?}' to yabai socket.", args);
-        return request(&socket_path, &args).map(|_| ());
+        return execute(&socket_path, &args);
     }
 
     match CommandScope::new(args[0].as_str())? {
         CommandScope::Window => Window::handle_request(socket_path, args),
         CommandScope::Space => Space::handle_request(socket_path, args),
-        _ => request(&socket_path, &args).map(|_| ()),
+        _ => execute(&socket_path, &args).map(|_| ()),
     }
 }
 
@@ -129,17 +160,17 @@ impl Window {
         // Only further process next/prev, if not run the command as it.
         if select != "next" && select != "prev" {
             println!("got {select} redirecting to yabai socket");
-            return request(&socket_path, &args).map(|_| ());
+            return execute(&socket_path, &args);
         }
 
         // See if next/prev just works before doing anything else.
-        if request(&socket_path, &args).is_ok() {
+        if execute(&socket_path, &args).is_ok() {
             println!("successfully ran {select} through yabai socket");
             return Ok(());
         }
 
         // Get current space information.
-        let space = query::<YabaiSpace, _>(&socket_path, &["query", "--spaces", "--space"])?;
+        let space = query::<YabaiSpace, _>(&socket_path, QUERY_CURRENT_SPACE)?;
 
         // Should just change focus to next space window
         // TODO: support moving window to next/prev space and delete current space empty??
@@ -156,7 +187,7 @@ impl Window {
                 return Space::handle_request(socket_path, args);
             } else {
                 let args = &["window", &command, &windows.first().unwrap().id.to_string()];
-                return request(&socket_path, args).map(|_| ());
+                return execute(&socket_path, args);
             }
         }
 
@@ -170,9 +201,8 @@ impl Window {
         println!("{select} window isn't found, trying to foucs {id}");
 
         // Finally, Try to focus by id or else focus to first window
-        request(&socket_path, &["window", &command, &id])
-            .or_else(|_| request(&socket_path, &["window", &command, "first"]))
-            .map(|_| ())
+        execute(&socket_path, &["window", &command, &id])
+            .or_else(|_| execute(&socket_path, &["window", &command, "first"]))
     }
 }
 
@@ -184,15 +214,13 @@ impl Space {
         // Only further process next/prev, if not run the command as it.
         if select != "next" && select != "prev" {
             println!("got {:?} ... redirecting to yabai socket", select);
-            request(&socket_path, &args).map(|_| ())
+            execute(&socket_path, &args)
         } else {
             // See if next/prev just works before doing anything else.
-            request(&socket_path, &args)
-                .or_else(|_| {
-                    let pos = if select == "next" { "first" } else { "last" };
-                    request(&socket_path, &["space", &args[1], pos])
-                })
-                .map(|_| ())
+            execute(&socket_path, &args).or_else(|_| {
+                let pos = if select == "next" { "first" } else { "last" };
+                execute(&socket_path, &["space", &args[1], pos])
+            })
         }
     }
 }
