@@ -1,4 +1,5 @@
 use self::models::{YabaiSpace, YabaiWindow};
+use crate::constants::QUERY_SPACE_WINDOWS;
 use anyhow::{bail, Context, Result};
 use serde::de::DeserializeOwned;
 use std::{
@@ -6,15 +7,14 @@ use std::{
     fmt::Debug,
     io::{Read, Write},
     os::unix::net::UnixStream,
-    path::Path,
 };
+mod constants;
 mod models;
 
 /// Send request to yabai socket.
-pub fn request<A, P>(socket_path: P, args: &[A]) -> Result<String>
+pub fn request<A>(socket_path: &str, args: &[A]) -> Result<String>
 where
     A: AsRef<[u8]> + Debug,
-    P: AsRef<Path>,
 {
     let mut stream = UnixStream::connect(socket_path)?;
     stream.set_nonblocking(false)?;
@@ -44,11 +44,10 @@ where
     Ok(String::from_utf8(buf)?)
 }
 
-pub fn query<T, A, P>(socket_path: P, args: &[A]) -> Result<T>
+pub fn query<T, A>(socket_path: &str, args: &[A]) -> Result<T>
 where
     T: DeserializeOwned,
     A: AsRef<[u8]> + Debug,
-    P: AsRef<Path>,
 {
     loop {
         let raw = request(&socket_path, args)?;
@@ -79,6 +78,13 @@ impl CommandScope {
     }
 }
 
+fn should_just_redirect<A>(cmd: &str, _args: &[A]) -> bool
+where
+    A: AsRef<[u8]> + Debug,
+{
+    return cmd != "focus" && cmd != "swap" && cmd != "move" && cmd != "warp";
+}
+
 fn main() -> Result<()> {
     let mut args: Vec<String> = env::args().collect();
     let user = env::var("USER")?;
@@ -97,8 +103,14 @@ fn main() -> Result<()> {
     }
 
     // Mutate command to correct format.
-    if let Some(cmd) = args.get_mut(command_pos) {
-        *cmd = format!("--{cmd}");
+    let command = args.get_mut(command_pos).unwrap();
+    let cmd = command.clone();
+    *command = format!("--{command}");
+
+    // Redirect if these isn't the command given
+    if should_just_redirect(&cmd, &args) {
+        println!("redircting '{:?}' to yabai socket.", args);
+        return request(&socket_path, &args).map(|_| ());
     }
 
     match CommandScope::new(args[0].as_str())? {
@@ -114,16 +126,10 @@ impl Window {
         let select = args.last().unwrap().as_str();
         let command = args[1].clone();
 
-        // Only further process these commands.
-        if &command != "--focus" && &command != "--swap" && &command != "--warp" {
-            println!("can't further process '{command}' redirecting to yabai socket");
-            return request(&socket_path, &args).map(|_| ());
-        }
-
         // Only further process next/prev, if not run the command as it.
         if select != "next" && select != "prev" {
             println!("got {select} redirecting to yabai socket");
-            return request(socket_path, &args).map(|_| ());
+            return request(&socket_path, &args).map(|_| ());
         }
 
         // See if next/prev just works before doing anything else.
@@ -133,33 +139,24 @@ impl Window {
         }
 
         // Get current space information.
-        let space = query::<YabaiSpace, _, _>(&socket_path, &["query", "--spaces", "--space"])?;
+        let space = query::<YabaiSpace, _>(&socket_path, &["query", "--spaces", "--space"])?;
 
         // Should just change focus to next space window
-        // TODO: move to next space too and delete current space???
+        // TODO: support moving window to next/prev space and delete current space empty??
         if space.first_window == space.last_window && &command == "--focus" {
-            let windows =
-                query::<Vec<YabaiWindow>, _, _>(&socket_path, &["query", "--windows", "--space"])?
-                    .into_iter()
-                    .filter(|w| {
-                        w.subrole != "AXUnknown.Hammerspoon" && w.is_visible && !w.has_focus
-                    })
-                    .collect::<Vec<YabaiWindow>>();
+            let windows = query::<Vec<YabaiWindow>, _>(&socket_path, QUERY_SPACE_WINDOWS)?
+                .into_iter()
+                // not sure why Hammerspoon create these windows
+                .filter(|w| w.subrole != "AXUnknown.Hammerspoon" && w.is_visible && !w.has_focus)
+                .collect::<Vec<YabaiWindow>>();
 
             if windows.len() == 0 {
-                println!(
-                    "No windows left in current space, trying {select} space instead of window"
-                );
-                return Space::handle_request(
-                    socket_path,
-                    vec!["space".to_string(), command, select.to_string()],
-                );
+                println!("No windows left in space, trying {select} space instead of window");
+                let args = vec!["space".to_string(), command, select.to_string()];
+                return Space::handle_request(socket_path, args);
             } else {
-                return request(
-                    socket_path,
-                    &["window", &command, &windows.first().unwrap().id.to_string()],
-                )
-                .map(|_| ());
+                let args = &["window", &command, &windows.first().unwrap().id.to_string()];
+                return request(&socket_path, args).map(|_| ());
             }
         }
 
@@ -174,7 +171,7 @@ impl Window {
 
         // Finally, Try to focus by id or else focus to first window
         request(&socket_path, &["window", &command, &id])
-            .or_else(|_| request(socket_path, &["window", &command, "first"]))
+            .or_else(|_| request(&socket_path, &["window", &command, "first"]))
             .map(|_| ())
     }
 }
@@ -182,51 +179,20 @@ impl Window {
 struct Space();
 impl Space {
     fn handle_request(socket_path: String, args: Vec<String>) -> Result<()> {
-        let select = args.last().unwrap().as_str();
-        let command = args[1].clone();
-
-        // Only further process these commands.
-        if &command != "--focus" && &command != "--swap" && &command != "--move" {
-            println!("can't further process '{command}' redirecting to yabai socket");
-            return request(&socket_path, &args).map(|_| ());
-        }
+        let select = args.last().unwrap();
 
         // Only further process next/prev, if not run the command as it.
         if select != "next" && select != "prev" {
-            println!("got {select} redirecting to yabai socket");
-            return request(socket_path, &args).map(|_| ());
-        }
-
-        // See if next/prev just works before doing anything else.
-        if request(&socket_path, &args).is_ok() {
-            println!("successfully ran {select} through yabai socket");
-            return Ok(());
-        }
-
-        println!("trying to find {select} space to execute {command} on");
-
-        let spaces: Vec<YabaiSpace> = query(&socket_path, &["query", "--spaces", "--display"])?;
-        let current: &YabaiSpace = spaces.iter().find(|s| s.has_focus).unwrap();
-
-        let mut new_index = if select == "next" {
-            current.index + 1
+            println!("got {:?} ... redirecting to yabai socket", select);
+            request(&socket_path, &args).map(|_| ())
         } else {
-            current.index - 1
-        };
-
-        if new_index == 0 {
-            new_index = if &command == "next" {
-                println!("make it as 1");
-                1
-            } else {
-                let index = spaces.iter().map(|s| s.index).max().unwrap();
-                eprintln!("index is 0, new index = {:#?}", index);
-                index
-            }
-        } else if new_index > spaces.len().try_into()? {
-            new_index = 1
-        };
-
-        request(&socket_path, &["space", &command, &new_index.to_string()]).map(|_| ())
+            // See if next/prev just works before doing anything else.
+            request(&socket_path, &args)
+                .or_else(|_| {
+                    let pos = if select == "next" { "first" } else { "last" };
+                    request(&socket_path, &["space", &args[1], pos])
+                })
+                .map(|_| ())
+        }
     }
 }
