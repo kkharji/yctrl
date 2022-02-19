@@ -182,14 +182,16 @@ impl Window {
     }
 
     fn handle_inc_request(socket_path: String, args: Vec<String>) -> Result<()> {
-        let dir = if args.last().unwrap() == "left" {
-            "-150:0"
-        } else {
-            "+150:0"
-        };
+        let left = args.last().unwrap() == "left";
+        let dir = if left { "-150:0" } else { "+150:0" };
+        let args = &["window", "--resize", &format!("left:{dir}")];
 
-        execute(&socket_path, &["window", "--resize", "left:", dir])
-            .or_else(|_| execute(&socket_path, &["window", "--resize", "right:", dir]))
+        execute(&socket_path, args).or_else(|_| {
+            let mut args = args.to_vec();
+            let dir = format!("right:{dir}");
+            args.insert(2, &dir);
+            execute(&socket_path, &args)
+        })
     }
 
     fn handle_request(socket_path: String, args: Vec<String>) -> Result<()> {
