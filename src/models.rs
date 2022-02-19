@@ -1,7 +1,7 @@
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Space {
+pub struct YabaiSpace {
     id: u32,
     uuid: String,
     pub index: u32,
@@ -22,7 +22,7 @@ pub struct Space {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Display {
+pub struct YabaiDisplay {
     id: u32,
     uuid: String,
     index: u32,
@@ -39,7 +39,7 @@ pub struct Frame {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Window {
+pub struct YabaiWindow {
     pub id: u32,
     pub pid: u32,
     pub app: String,
