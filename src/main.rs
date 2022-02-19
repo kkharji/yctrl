@@ -182,6 +182,51 @@ impl Window {
 struct Space();
 impl Space {
     fn handle_request(socket_path: String, args: Vec<String>) -> Result<()> {
-        request(&socket_path, &args).map(|_| ())
+        let select = args.last().unwrap().as_str();
+        let command = args[1].clone();
+
+        // Only further process these commands.
+        if &command != "--focus" && &command != "--swap" && &command != "--move" {
+            println!("can't further process '{command}' redirecting to yabai socket");
+            return request(&socket_path, &args).map(|_| ());
+        }
+
+        // Only further process next/prev, if not run the command as it.
+        if select != "next" && select != "prev" {
+            println!("got {select} redirecting to yabai socket");
+            return request(socket_path, &args).map(|_| ());
+        }
+
+        // See if next/prev just works before doing anything else.
+        if request(&socket_path, &args).is_ok() {
+            println!("successfully ran {select} through yabai socket");
+            return Ok(());
+        }
+
+        println!("trying to find {select} space to execute {command} on");
+
+        let spaces: Vec<YabaiSpace> = query(&socket_path, &["query", "--spaces", "--display"])?;
+        let current: &YabaiSpace = spaces.iter().find(|s| s.has_focus).unwrap();
+
+        let mut new_index = if select == "next" {
+            current.index + 1
+        } else {
+            current.index - 1
+        };
+
+        if new_index == 0 {
+            new_index = if &command == "next" {
+                println!("make it as 1");
+                1
+            } else {
+                let index = spaces.iter().map(|s| s.index).max().unwrap();
+                eprintln!("index is 0, new index = {:#?}", index);
+                index
+            }
+        } else if new_index > spaces.len().try_into()? {
+            new_index = 1
+        };
+
+        request(&socket_path, &["space", &command, &new_index.to_string()]).map(|_| ())
     }
 }
