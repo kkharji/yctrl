@@ -154,6 +154,12 @@ impl Window {
                     socket_path,
                     vec!["space".to_string(), command, select.to_string()],
                 );
+            } else {
+                return request(
+                    socket_path,
+                    &["window", &command, &windows.first().unwrap().id.to_string()],
+                )
+                .map(|_| ());
             }
         }
 
