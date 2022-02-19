@@ -123,7 +123,7 @@ fn main() -> Result<()> {
 
     // Remove caller from argument.
     args.remove(0);
-    if args.len() < 3 {
+    if args.len() < 2 {
         bail!("Not enough arguments provided.")
     }
 
