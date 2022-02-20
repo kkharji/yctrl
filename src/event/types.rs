@@ -344,9 +344,9 @@ impl ApplicationEvent {
     }
 }
 
-impl TryFrom<&Vec<u8>> for Event {
+impl TryFrom<&mut Vec<u8>> for Event {
     type Error = Error;
-    fn try_from(bytes: &Vec<u8>) -> Result<Self, Error> {
+    fn try_from(bytes: &mut Vec<u8>) -> Result<Self, Error> {
         let val = &**bytes;
         // For some reason match won't work
         let event = if WINDOW_FOCUSED == val {
@@ -419,8 +419,8 @@ impl TryFrom<&Vec<u8>> for Event {
 fn parse_string_to_event() {
     macro_rules! should_parse {
         ($str: expr, $type: ident, $check_method: ident) => {{
-            let event_category = $str.as_bytes().to_vec();
-            match Event::try_from(&event_category) {
+            let mut event_category = $str.as_bytes().to_vec();
+            match Event::try_from(&mut event_category) {
                 Ok(result) => {
                     if let Event::$type(event) = result {
                         assert!(event.$check_method())

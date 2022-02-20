@@ -3,7 +3,7 @@ use self::{
     models::{YabaiSpace, YabaiWindow},
 };
 use crate::constants::{QUERY_CURRENT_SPACE, QUERY_SPACE_WINDOWS};
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use serde::de::DeserializeOwned;
 use std::{
     env,
@@ -20,7 +20,7 @@ fn main() -> Result<()> {
     args.remove(0); // Remove caller from argument.
     if args.len() < 2 {
         if args[0] == "watch" {
-            EventLoop::start()?
+            EventLoop::start().map_err(|e| anyhow!("Unable to start listener: {e}"))?
         } else {
             bail!("yctrl: Not enough arguments provided.")
         }
