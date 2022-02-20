@@ -17,6 +17,7 @@
   outputs = { self, nixpkgs, utils, naersk-lib, devshell, flake-compat }:
     utils.lib.eachDefaultSystem (system:
       let
+        inherit (utils.lib) flattenTree mkApp;
         pkgs = import nixpkgs {
           system = system;
           overlays = [ devshell.overlay ];
@@ -27,8 +28,9 @@
           pname = "yctrl";
           root = ./.;
         };
-        defaultApp = utils.lib.mkApp { drv = self.defaultPackage."${system}"; };
+        packages = flattenTree { yctrl = self.defaultPackage."${system}"; };
         overlay = f: p: { yctrl = self.defaultPackage."${system}"; };
+        defaultApp = mkApp { drv = self.defaultPackage."${system}"; };
         devShell = pkgs.devshell.mkShell {
           imports = [ (pkgs.devshell.importTOML ./devshell.toml) ];
           # env = [{ # FAILS with rust-anaylzer
