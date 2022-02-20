@@ -1,7 +1,15 @@
+imports = [ "git.hooks" ]
 [devshell]
 name = "yctrl-dev-shell"
 
 # packages = [ "cargo-watch" ]
+[git.hooks]
+enable = true
+
+
+[[commands]]
+package = "git-cliff"
+help = "Changelog generator"
 
 [[commands]]
 name = "yctrl"
@@ -26,3 +34,14 @@ name = "watch"
 help = "Startin cargo watch and do nix build"
 category = "Main"
 command = "cargo watch --clear --why --postpone --delay 5 --watch src --shell 'nix build'"
+
+# Check-in with nix-flake-check
+# FIXME: overlay does not take an argument named 'final'
+[git.hooks.pre-commit]
+text = """
+# nix flake check"
+OUTPUT_FILE=CHANGELOG.md
+CONFIG_FILE=./.github/workflows/cliff.toml
+git-cliff -o $OUTPUT_FILE -c $CONFIG_FILE --with-commit "$COMMIT_MSG"
+git add $OUTPUT_FILE
+"""
