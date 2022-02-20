@@ -167,10 +167,10 @@ pub enum WindowEvent {
     ///
     /// Passes one argument: $YABAI_WINDOW_ID
     Deminimized,
-    /// Triggered when a window changes its title. +
-    ///
-    /// Passes one argument: $YABAI_WINDOW_ID
-    TitleChanged,
+    // Triggered when a window changes its title. +
+    //
+    // Passes one argument: $YABAI_WINDOW_ID
+    // TitleChanged,
 }
 
 impl WindowEvent {
@@ -237,14 +237,14 @@ impl WindowEvent {
         matches!(self, Self::Deminimized)
     }
 
-    /// Returns `true` if the window event is [`TitleChanged`].
-    ///
-    /// i.e. a window got title got updated.
-    ///
-    /// [`TitleChanged`]: WindowEvent::TitleChanged
-    pub fn is_title_change_event(&self) -> bool {
-        matches!(self, Self::TitleChanged)
-    }
+    // Returns `true` if the window event is [`TitleChanged`].
+    //
+    // i.e. a window got title got updated.
+    //
+    // [`TitleChanged`]: WindowEvent::TitleChanged
+    // pub fn is_title_change_event(&self) -> bool {
+    //     matches!(self, Self::TitleChanged)
+    // }
 }
 
 #[derive(Debug)]
@@ -252,19 +252,19 @@ pub enum ApplicationEvent {
     /// Triggered when a new application is launched.
     ///
     /// Passes one argument: $YABAI_PROCESS_ID
-    Launched,
+    // Launched,
     /// Triggered when an application is terminated. +
     ///
     /// Passes one argument: $YABAI_PROCESS_ID
-    Terminated,
+    // Terminated,
     /// Triggered when the front-most application changes
     ///
     /// Passes two arguments: $YABAI_PROCESS_ID, $YABAI_RECENT_PROCESS_ID
-    FrontSwitched,
+    // FrontSwitched,
     /// Triggered when an application is activated.
     ///
     /// Passes one argument: $YABAI_PROCESS_ID
-    Activated,
+    // Activated,
     /// Triggered when an application is deactivated.
     ///
     /// Passes one argument: $YABAI_PROCESS_ID
@@ -285,36 +285,36 @@ impl ApplicationEvent {
     /// i.e. a new application launched
     ///
     /// [`Launched`]: ApplicationEvent::Launched
-    pub fn is_launch_event(&self) -> bool {
-        matches!(self, Self::Launched)
-    }
+    // pub fn is_launch_event(&self) -> bool {
+    //     matches!(self, Self::Launched)
+    // }
 
     /// Returns `true` if the application event is [`Terminated`].
     ///
     /// i.e. an application got terminated.
     ///
     /// [`Terminated`]: ApplicationEvent::Terminated
-    pub fn is_terminate_event(&self) -> bool {
-        matches!(self, Self::Terminated)
-    }
+    // pub fn is_terminate_event(&self) -> bool {
+    //     matches!(self, Self::Terminated)
+    // }
 
     /// Returns `true` if the application event is [`FrontSwitched`].
     ///
     /// i.e. an application became ontop?
     ///
     /// [`FrontSwitched`]: ApplicationEvent::FrontSwitched
-    pub fn is_front_switch_event(&self) -> bool {
-        matches!(self, Self::FrontSwitched)
-    }
+    // pub fn is_front_switch_event(&self) -> bool {
+    //     matches!(self, Self::FrontSwitched)
+    // }
 
     /// Returns `true` if the application event is [`Activated`].
     ///
     /// i.e. an application got activated
     ///
     /// [`Activated`]: ApplicationEvent::Activated
-    pub fn is_activate_event(&self) -> bool {
-        matches!(self, Self::Activated)
-    }
+    // pub fn is_activate_event(&self) -> bool {
+    //     matches!(self, Self::Activated)
+    // }
 
     /// Returns `true` if the application event is [`Deactivated`].
     ///
@@ -369,19 +369,25 @@ impl TryFrom<&Vec<u8>> for Event {
             Self::Application(ApplicationEvent::Visible)
         } else if APPLICATION_HIDDEN == val {
             Self::Application(ApplicationEvent::Hidden)
-        } else if APPLICATION_ACTIVATED == val {
-            Self::Application(ApplicationEvent::Activated)
-        } else if APPLICATION_DEACTIVATED == val {
-            Self::Application(ApplicationEvent::Deactivated)
-        } else if APPLICATION_LAUNCHED == val {
-            Self::Application(ApplicationEvent::Launched)
-        } else if APPLICATION_TERMINATED == val {
-            Self::Application(ApplicationEvent::Terminated)
-        } else if APPLICATION_FRONT_SWITCHED == val {
-            Self::Application(ApplicationEvent::FrontSwitched)
-        } else if WINDOW_TITLE_CHANGED == val {
-            Self::Window(WindowEvent::TitleChanged)
-        } else if MISSON_CONTROL_ENTER == val {
+        }
+        // else if APPLICATION_ACTIVATED == val {
+        //     Self::Application(ApplicationEvent::Activated)
+        // } else if APPLICATION_DEACTIVATED == val {
+        //     Self::Application(ApplicationEvent::Deactivated)
+        // }
+        // else if APPLICATION_LAUNCHED == val {
+        //     Self::Application(ApplicationEvent::Launched)
+        // }
+        // else if APPLICATION_TERMINATED == val {
+        //     Self::Application(ApplicationEvent::Terminated)
+        // }
+        // else if APPLICATION_FRONT_SWITCHED == val {
+        //     Self::Application(ApplicationEvent::FrontSwitched)
+        // }
+        // else if WINDOW_TITLE_CHANGED == val {
+        //     Self::Window(WindowEvent::TitleChanged)
+        // }
+        else if MISSON_CONTROL_ENTER == val {
             Self::MissionControl(MissionControlEvent::Enter)
         } else if MISSON_CONTROL_EXIT == val {
             Self::MissionControl(MissionControlEvent::Exit)
@@ -436,18 +442,14 @@ fn parse_string_to_event() {
     should_parse!("window_destroyed", Window, is_destory_event);
     should_parse!("window_minimized", Window, is_minimize_event);
     should_parse!("window_deminimized", Window, is_deminimize_event);
-    should_parse!("window_title_changed", Window, is_title_change_event);
-    should_parse!("application_terminated", Application, is_terminate_event);
+    // should_parse!("window_title_changed", Window, is_title_change_event);
+    // should_parse!("application_terminated", Application, is_terminate_event);
     should_parse!("application_hidden", Application, is_hidden_event);
     should_parse!("application_visible", Application, is_visible_event);
-    should_parse!("application_launched", Application, is_launch_event);
-    should_parse!(
-        "application_front_switched",
-        Application,
-        is_front_switch_event
-    );
-    should_parse!("application_activated", Application, is_activate_event);
-    should_parse!("application_deactivated", Application, is_deactivate_event);
+    // should_parse!("application_launched", Application, is_launch_event);
+    // should_parse!("application_front_switched", Application, is_front_switch_event);
+    // should_parse!("application_activated", Application, is_activate_event);
+    // should_parse!("application_deactivated", Application, is_deactivate_event);
     should_parse!("space_changed", Space, is_change_event);
     should_parse!("display_changed", Display, is_change_event);
     should_parse!("display_added", Display, is_add_event);
