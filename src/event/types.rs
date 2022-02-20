@@ -24,14 +24,14 @@ impl MissionControlEvent {
     /// Returns `true` if the mission control event is [`Enter`].
     ///
     /// [`Enter`]: MissionControlEvent::Enter
-    pub fn is_enter(&self) -> bool {
+    pub fn is_enter_event(&self) -> bool {
         matches!(self, Self::Enter)
     }
 
     /// Returns `true` if the mission control event is [`Exit`].
     ///
     /// [`Exit`]: MissionControlEvent::Exit
-    pub fn is_exit(&self) -> bool {
+    pub fn is_exit_event(&self) -> bool {
         matches!(self, Self::Exit)
     }
 }
@@ -45,7 +45,7 @@ impl SpaceEvent {
     /// Returns `true` if the space event is [`Changed`].
     ///
     /// [`Changed`]: SpaceEvent::Changed
-    pub fn is_changed(&self) -> bool {
+    pub fn is_change_event(&self) -> bool {
         matches!(self, Self::Changed)
     }
 }
@@ -63,35 +63,35 @@ impl DisplayEvent {
     /// Returns `true` if the display event is [`Added`].
     ///
     /// [`Added`]: DisplayEvent::Added
-    pub fn is_added(&self) -> bool {
+    pub fn is_add_event(&self) -> bool {
         matches!(self, Self::Added)
     }
 
     /// Returns `true` if the display event is [`Removed`].
     ///
     /// [`Removed`]: DisplayEvent::Removed
-    pub fn is_removed(&self) -> bool {
+    pub fn is_remove_event(&self) -> bool {
         matches!(self, Self::Removed)
     }
 
     /// Returns `true` if the display event is [`Moved`].
     ///
     /// [`Moved`]: DisplayEvent::Moved
-    pub fn is_moved(&self) -> bool {
+    pub fn is_move_event(&self) -> bool {
         matches!(self, Self::Moved)
     }
 
     /// Returns `true` if the display event is [`Resized`].
     ///
     /// [`Resized`]: DisplayEvent::Resized
-    pub fn is_resized(&self) -> bool {
+    pub fn is_resize_event(&self) -> bool {
         matches!(self, Self::Resized)
     }
 
     /// Returns `true` if the display event is [`Changed`].
     ///
     /// [`Changed`]: DisplayEvent::Changed
-    pub fn is_changed(&self) -> bool {
+    pub fn is_change_event(&self) -> bool {
         matches!(self, Self::Changed)
     }
 }
@@ -112,56 +112,56 @@ impl WindowEvent {
     /// Returns `true` if the window event is [`Created`].
     ///
     /// [`Created`]: WindowEvent::Created
-    pub fn is_created(&self) -> bool {
+    pub fn is_create_event(&self) -> bool {
         matches!(self, Self::Created)
     }
 
     /// Returns `true` if the window event is [`Destroyed`].
     ///
     /// [`Destroyed`]: WindowEvent::Destroyed
-    pub fn is_destroyed(&self) -> bool {
+    pub fn is_destory_event(&self) -> bool {
         matches!(self, Self::Destroyed)
     }
 
     /// Returns `true` if the window event is [`Focused`].
     ///
     /// [`Focused`]: WindowEvent::Focused
-    pub fn is_focused(&self) -> bool {
+    pub fn is_focus_event(&self) -> bool {
         matches!(self, Self::Focused)
     }
 
     /// Returns `true` if the window event is [`Moved`].
     ///
     /// [`Moved`]: WindowEvent::Moved
-    pub fn is_moved(&self) -> bool {
+    pub fn is_move_event(&self) -> bool {
         matches!(self, Self::Moved)
     }
 
     /// Returns `true` if the window event is [`Resized`].
     ///
     /// [`Resized`]: WindowEvent::Resized
-    pub fn is_resized(&self) -> bool {
+    pub fn is_resize_event(&self) -> bool {
         matches!(self, Self::Resized)
     }
 
     /// Returns `true` if the window event is [`Minimized`].
     ///
     /// [`Minimized`]: WindowEvent::Minimized
-    pub fn is_minimized(&self) -> bool {
+    pub fn is_minimize_event(&self) -> bool {
         matches!(self, Self::Minimized)
     }
 
     /// Returns `true` if the window event is [`Deminimized`].
     ///
     /// [`Deminimized`]: WindowEvent::Deminimized
-    pub fn is_deminimized(&self) -> bool {
+    pub fn is_deminimize_event(&self) -> bool {
         matches!(self, Self::Deminimized)
     }
 
     /// Returns `true` if the window event is [`TitleChanged`].
     ///
     /// [`TitleChanged`]: WindowEvent::TitleChanged
-    pub fn is_title_changed(&self) -> bool {
+    pub fn is_title_change_event(&self) -> bool {
         matches!(self, Self::TitleChanged)
     }
 }
@@ -181,49 +181,49 @@ impl ApplicationEvent {
     /// Returns `true` if the application event is [`Launched`].
     ///
     /// [`Launched`]: ApplicationEvent::Launched
-    pub fn is_launched(&self) -> bool {
+    pub fn is_launch_event(&self) -> bool {
         matches!(self, Self::Launched)
     }
 
     /// Returns `true` if the application event is [`Terminated`].
     ///
     /// [`Terminated`]: ApplicationEvent::Terminated
-    pub fn is_terminated(&self) -> bool {
+    pub fn is_terminate_event(&self) -> bool {
         matches!(self, Self::Terminated)
     }
 
     /// Returns `true` if the application event is [`FrontSwitched`].
     ///
     /// [`FrontSwitched`]: ApplicationEvent::FrontSwitched
-    pub fn is_front_switched(&self) -> bool {
+    pub fn is_front_switch_event(&self) -> bool {
         matches!(self, Self::FrontSwitched)
     }
 
     /// Returns `true` if the application event is [`Activated`].
     ///
     /// [`Activated`]: ApplicationEvent::Activated
-    pub fn is_activated(&self) -> bool {
+    pub fn is_activate_event(&self) -> bool {
         matches!(self, Self::Activated)
     }
 
     /// Returns `true` if the application event is [`Deactivated`].
     ///
     /// [`Deactivated`]: ApplicationEvent::Deactivated
-    pub fn is_deactivated(&self) -> bool {
+    pub fn is_deactivate_event(&self) -> bool {
         matches!(self, Self::Deactivated)
     }
 
     /// Returns `true` if the application event is [`Visible`].
     ///
     /// [`Visible`]: ApplicationEvent::Visible
-    pub fn is_visible(&self) -> bool {
+    pub fn is_visible_event(&self) -> bool {
         matches!(self, Self::Visible)
     }
 
     /// Returns `true` if the application event is [`Hidden`].
     ///
     /// [`Hidden`]: ApplicationEvent::Hidden
-    pub fn is_hidden(&self) -> bool {
+    pub fn is_hidden_event(&self) -> bool {
         matches!(self, Self::Hidden)
     }
 }
@@ -275,7 +275,7 @@ impl TryFrom<&Bytes> for Event {
         } else if WINDOW_MINIMIZED == val {
             Self::Window(WindowEvent::Minimized)
         } else if WINDOW_DEMINIMIZED == val {
-            Self::Window(WindowEvent::Created)
+            Self::Window(WindowEvent::Deminimized)
         } else if SPACE_CHANGED == val {
             Self::Space(SpaceEvent::Changed)
         } else if APPLICATION_VISIBLE == val {
@@ -340,30 +340,47 @@ fn parse_string_to_event() {
         }};
     }
 
-    should_parse!("event mission_control_exit", MissionControl, is_exit);
-    should_parse!("event mission_control_enter", MissionControl, is_enter);
-    should_parse!("event window_moved", Window, is_moved);
-    should_parse!("event window_focused", Window, is_focused);
-    should_parse!("event window_resized", Window, is_resized);
-    should_parse!("event window_created", Window, is_created);
-    should_parse!("event window_destroyed", Window, is_destroyed);
-    should_parse!("event window_minimized", Window, is_minimized);
-    should_parse!("event window_title_changed", Window, is_title_changed);
-    should_parse!("event application_terminated", Application, is_terminated);
-    should_parse!("event application_hidden", Application, is_hidden);
-    should_parse!("event application_visible", Application, is_visible);
-    should_parse!("event application_launched", Application, is_launched);
+    should_parse!("event mission_control_exit", MissionControl, is_exit_event);
+    should_parse!(
+        "event mission_control_enter",
+        MissionControl,
+        is_enter_event
+    );
+    should_parse!("event window_moved", Window, is_move_event);
+    should_parse!("event window_focused", Window, is_focus_event);
+    should_parse!("event window_resized", Window, is_resize_event);
+    should_parse!("event window_created", Window, is_create_event);
+    should_parse!("event window_destroyed", Window, is_destory_event);
+    should_parse!("event window_minimized", Window, is_minimize_event);
+    should_parse!("event window_deminimized", Window, is_deminimize_event);
+    should_parse!("event window_title_changed", Window, is_title_change_event);
+    should_parse!(
+        "event application_terminated",
+        Application,
+        is_terminate_event
+    );
+    should_parse!("event application_hidden", Application, is_hidden_event);
+    should_parse!("event application_visible", Application, is_visible_event);
+    should_parse!("event application_launched", Application, is_launch_event);
     should_parse!(
         "event application_front_switched",
         Application,
-        is_front_switched
+        is_front_switch_event
     );
-    should_parse!("event application_activated", Application, is_activated);
-    should_parse!("event application_deactivated", Application, is_deactivated);
-    should_parse!("event space_changed", Space, is_changed);
-    should_parse!("event display_changed", Display, is_changed);
-    should_parse!("event display_added", Display, is_added);
-    should_parse!("event display_moved", Display, is_moved);
-    should_parse!("event display_removed", Display, is_removed);
-    should_parse!("event display_resized", Display, is_resized);
+    should_parse!(
+        "event application_activated",
+        Application,
+        is_activate_event
+    );
+    should_parse!(
+        "event application_deactivated",
+        Application,
+        is_deactivate_event
+    );
+    should_parse!("event space_changed", Space, is_change_event);
+    should_parse!("event display_changed", Display, is_change_event);
+    should_parse!("event display_added", Display, is_add_event);
+    should_parse!("event display_moved", Display, is_move_event);
+    should_parse!("event display_removed", Display, is_remove_event);
+    should_parse!("event display_resized", Display, is_resize_event);
 }
