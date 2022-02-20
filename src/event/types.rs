@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use crate::constants::*;
 use anyhow::{bail, Error, Result};
 use std::fmt::Debug;
 
@@ -226,35 +227,6 @@ impl ApplicationEvent {
         matches!(self, Self::Hidden)
     }
 }
-
-/// Events
-const WINDOW_CREATED: &[u8; 14] = b"window_created";
-const WINDOW_DESTROYED: &[u8; 16] = b"window_destroyed";
-const WINDOW_FOCUSED: &[u8; 14] = b"window_focused";
-const WINDOW_MOVED: &[u8; 12] = b"window_moved";
-const WINDOW_RESIZED: &[u8; 14] = b"window_resized";
-const WINDOW_MINIMIZED: &[u8; 16] = b"window_minimized";
-const WINDOW_DEMINIMIZED: &[u8; 18] = b"window_deminimized";
-const WINDOW_TITLE_CHANGED: &[u8; 20] = b"window_title_changed";
-
-const SPACE_CHANGED: &[u8; 13] = b"space_changed";
-
-const DISPLAY_ADDED: &[u8; 13] = b"display_added";
-const DISPLAY_REMOVED: &[u8; 15] = b"display_removed";
-const DISPLAY_MOVED: &[u8; 13] = b"display_moved";
-const DISPLAY_RESIZED: &[u8; 15] = b"display_resized";
-const DISPLAY_CHANGED: &[u8; 15] = b"display_changed";
-
-const MISSON_CONTROL_ENTER: &[u8; 21] = b"mission_control_enter";
-const MISSON_CONTROL_EXIT: &[u8; 20] = b"mission_control_exit";
-
-const APPLICATION_LAUNCHED: &[u8; 20] = b"application_launched";
-const APPLICATION_TERMINATED: &[u8; 22] = b"application_terminated";
-const APPLICATION_FRONT_SWITCHED: &[u8; 26] = b"application_front_switched";
-const APPLICATION_ACTIVATED: &[u8; 21] = b"application_activated";
-const APPLICATION_DEACTIVATED: &[u8; 23] = b"application_deactivated";
-const APPLICATION_VISIBLE: &[u8; 19] = b"application_visible";
-const APPLICATION_HIDDEN: &[u8; 18] = b"application_hidden";
 
 impl TryFrom<&Vec<u8>> for Event {
     type Error = Error;
