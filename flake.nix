@@ -15,9 +15,9 @@
   };
 
   outputs = { self, nixpkgs, utils, naersk-lib, devshell, flake-compat }:
-    utils.lib.eachDefaultSystem (system:
+    with utils.lib;
+    eachSystem [ system.aarch64-darwin system.x86_64-darwin ] (system:
       let
-        inherit (utils.lib) flattenTree mkApp;
         pkgs = import nixpkgs {
           system = system;
           overlays = [ devshell.overlay ];
