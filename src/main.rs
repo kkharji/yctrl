@@ -9,6 +9,7 @@ use std::{
     os::unix::net::UnixStream,
 };
 mod constants;
+mod event;
 mod models;
 
 fn main() -> Result<()> {
