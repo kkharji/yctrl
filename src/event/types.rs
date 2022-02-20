@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-use bytes::Bytes;
 
 use anyhow::{bail, Error, Result};
 use std::fmt::Debug;
@@ -257,10 +256,10 @@ const APPLICATION_DEACTIVATED: &[u8; 23] = b"application_deactivated";
 const APPLICATION_VISIBLE: &[u8; 19] = b"application_visible";
 const APPLICATION_HIDDEN: &[u8; 18] = b"application_hidden";
 
-impl TryFrom<&Bytes> for Event {
+impl TryFrom<Vec<u8>> for Event {
     type Error = Error;
-    fn try_from(bytes: &Bytes) -> Result<Self, Error> {
-        let val = &*bytes.as_ref();
+    fn try_from(bytes: Vec<u8>) -> Result<Self, Error> {
+        let val = &*bytes;
         // For some reason match won't work
         let event = if WINDOW_FOCUSED == val {
             Self::Window(WindowEvent::Focused)
@@ -314,7 +313,7 @@ impl TryFrom<&Bytes> for Event {
 
         match event {
             Self::UnSupported => {
-                let event = std::str::from_utf8(bytes)?;
+                let event = std::str::from_utf8(&bytes)?;
                 bail!("Event {event} is unsupported.")
             }
             _ => Ok(event),
@@ -326,8 +325,8 @@ impl TryFrom<&Bytes> for Event {
 fn parse_string_to_event() {
     macro_rules! should_parse {
         ($str: expr, $type: ident, $check_method: ident) => {{
-            let event_category = Bytes::from($str).split_off(6);
-            match Event::try_from(&event_category) {
+            let event_category = $str.as_bytes().to_vec();
+            match Event::try_from(event_category) {
                 Ok(result) => {
                     if let Event::$type(event) = result {
                         assert!(event.$check_method())
@@ -340,47 +339,31 @@ fn parse_string_to_event() {
         }};
     }
 
-    should_parse!("event mission_control_exit", MissionControl, is_exit_event);
+    should_parse!("mission_control_exit", MissionControl, is_exit_event);
+    should_parse!("mission_control_enter", MissionControl, is_enter_event);
+    should_parse!("window_moved", Window, is_move_event);
+    should_parse!("window_focused", Window, is_focus_event);
+    should_parse!("window_resized", Window, is_resize_event);
+    should_parse!("window_created", Window, is_create_event);
+    should_parse!("window_destroyed", Window, is_destory_event);
+    should_parse!("window_minimized", Window, is_minimize_event);
+    should_parse!("window_deminimized", Window, is_deminimize_event);
+    should_parse!("window_title_changed", Window, is_title_change_event);
+    should_parse!("application_terminated", Application, is_terminate_event);
+    should_parse!("application_hidden", Application, is_hidden_event);
+    should_parse!("application_visible", Application, is_visible_event);
+    should_parse!("application_launched", Application, is_launch_event);
     should_parse!(
-        "event mission_control_enter",
-        MissionControl,
-        is_enter_event
-    );
-    should_parse!("event window_moved", Window, is_move_event);
-    should_parse!("event window_focused", Window, is_focus_event);
-    should_parse!("event window_resized", Window, is_resize_event);
-    should_parse!("event window_created", Window, is_create_event);
-    should_parse!("event window_destroyed", Window, is_destory_event);
-    should_parse!("event window_minimized", Window, is_minimize_event);
-    should_parse!("event window_deminimized", Window, is_deminimize_event);
-    should_parse!("event window_title_changed", Window, is_title_change_event);
-    should_parse!(
-        "event application_terminated",
-        Application,
-        is_terminate_event
-    );
-    should_parse!("event application_hidden", Application, is_hidden_event);
-    should_parse!("event application_visible", Application, is_visible_event);
-    should_parse!("event application_launched", Application, is_launch_event);
-    should_parse!(
-        "event application_front_switched",
+        "application_front_switched",
         Application,
         is_front_switch_event
     );
-    should_parse!(
-        "event application_activated",
-        Application,
-        is_activate_event
-    );
-    should_parse!(
-        "event application_deactivated",
-        Application,
-        is_deactivate_event
-    );
-    should_parse!("event space_changed", Space, is_change_event);
-    should_parse!("event display_changed", Display, is_change_event);
-    should_parse!("event display_added", Display, is_add_event);
-    should_parse!("event display_moved", Display, is_move_event);
-    should_parse!("event display_removed", Display, is_remove_event);
-    should_parse!("event display_resized", Display, is_resize_event);
+    should_parse!("application_activated", Application, is_activate_event);
+    should_parse!("application_deactivated", Application, is_deactivate_event);
+    should_parse!("space_changed", Space, is_change_event);
+    should_parse!("display_changed", Display, is_change_event);
+    should_parse!("display_added", Display, is_add_event);
+    should_parse!("display_moved", Display, is_move_event);
+    should_parse!("display_removed", Display, is_remove_event);
+    should_parse!("display_resized", Display, is_resize_event);
 }
