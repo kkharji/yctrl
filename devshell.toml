@@ -40,8 +40,11 @@ command = "cargo watch --clear --why --postpone --delay 5 --watch src --shell 'n
 [git.hooks.pre-commit]
 text = """
 # nix flake check"
-OUTPUT_FILE=CHANGELOG.md
-CONFIG_FILE=./.github/workflows/cliff.toml
-git-cliff -o $OUTPUT_FILE -c $CONFIG_FILE --with-commit "$COMMIT_MSG"
-git add $OUTPUT_FILE
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ $BRANCH == "^master$" ]]; then
+  OUTPUT_FILE=CHANGELOG.md
+  CONFIG_FILE=./.github/workflows/cliff.toml
+  git-cliff -o $OUTPUT_FILE -c $CONFIG_FILE --with-commit "$COMMIT_MSG"
+  git add $OUTPUT_FILE
+fi
 """
