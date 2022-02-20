@@ -1,4 +1,7 @@
-use self::models::{YabaiSpace, YabaiWindow};
+use self::{
+    event::EventLoop,
+    models::{YabaiSpace, YabaiWindow},
+};
 use crate::constants::{QUERY_CURRENT_SPACE, QUERY_SPACE_WINDOWS};
 use anyhow::{bail, Context, Result};
 use serde::de::DeserializeOwned;
@@ -16,7 +19,11 @@ fn main() -> Result<()> {
     let mut args: Vec<String> = env::args().collect();
     args.remove(0); // Remove caller from argument.
     if args.len() < 2 {
-        bail!("yctrl: Not enough arguments provided.")
+        if args[0] == "watch" {
+            EventLoop::start()?
+        } else {
+            bail!("yctrl: Not enough arguments provided.")
+        }
     }
 
     // Get yabai scoket path

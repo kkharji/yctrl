@@ -21,7 +21,7 @@ command = "./result/bin/yctrl $@"
 name = "byctrl"
 help = "build and run main bin"
 category = "Main"
-command = "nix run $@"
+command = "nix build && ./result/bin/yctrl $@"
 
 [[commands]]
 name = "build"

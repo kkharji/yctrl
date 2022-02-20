@@ -5,7 +5,7 @@ use std::fmt::Debug;
 
 #[derive(Debug)]
 pub enum Event {
-    UnSupported,
+    NotSupported,
     MissionControl(MissionControlEvent),
     Window(WindowEvent),
     Display(DisplayEvent),
@@ -256,10 +256,10 @@ const APPLICATION_DEACTIVATED: &[u8; 23] = b"application_deactivated";
 const APPLICATION_VISIBLE: &[u8; 19] = b"application_visible";
 const APPLICATION_HIDDEN: &[u8; 18] = b"application_hidden";
 
-impl TryFrom<Vec<u8>> for Event {
+impl TryFrom<&Vec<u8>> for Event {
     type Error = Error;
-    fn try_from(bytes: Vec<u8>) -> Result<Self, Error> {
-        let val = &*bytes;
+    fn try_from(bytes: &Vec<u8>) -> Result<Self, Error> {
+        let val = &**bytes;
         // For some reason match won't work
         let event = if WINDOW_FOCUSED == val {
             Self::Window(WindowEvent::Focused)
@@ -308,13 +308,13 @@ impl TryFrom<Vec<u8>> for Event {
         } else if DISPLAY_CHANGED == val {
             Self::Display(DisplayEvent::Changed)
         } else {
-            Self::UnSupported
+            Self::NotSupported
         };
 
         match event {
-            Self::UnSupported => {
+            Self::NotSupported => {
                 let event = std::str::from_utf8(&bytes)?;
-                bail!("Event {event} is unsupported.")
+                bail!("Event {event} is not supported.")
             }
             _ => Ok(event),
         }
@@ -326,7 +326,7 @@ fn parse_string_to_event() {
     macro_rules! should_parse {
         ($str: expr, $type: ident, $check_method: ident) => {{
             let event_category = $str.as_bytes().to_vec();
-            match Event::try_from(event_category) {
+            match Event::try_from(&event_category) {
                 Ok(result) => {
                     if let Event::$type(event) = result {
                         assert!(event.$check_method())
