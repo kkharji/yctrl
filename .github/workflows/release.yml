@@ -5,7 +5,7 @@ on:
     branches: [ master ]
 
 jobs:
-  publish_release_note:
+  release:
     name: Publish release note
     runs-on: ubuntu-latest
     steps:
