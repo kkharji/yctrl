@@ -21,13 +21,12 @@ where
 
 fn main() -> Result<()> {
     let mut args: Vec<String> = env::args().skip(1).collect();
+    let argc = args.len();
 
-    if args.len() < 2 {
-        if args[0] == "watch" {
-            Runtime::start().map_err(|e| anyhow!("Unable to start listener: {e}"))?
-        } else {
-            bail!("yctrl: Not enough arguments provided.")
-        }
+    if argc == 0 {
+        Runtime::start().map_err(|e| anyhow!("Unable to start listener: {e}"))?
+    } else if argc < 2 {
+        bail!("yctrl: Not enough arguments provided.")
     }
 
     // Get yabai scoket path
