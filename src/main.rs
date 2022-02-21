@@ -1,8 +1,8 @@
 mod constants;
-mod r#loop;
+mod runtime;
 mod yabai;
 
-use self::{constants::*, r#loop::EventLoop};
+use self::{constants::*, runtime::Runtime};
 use anyhow::{anyhow, bail, Result};
 use std::{env, fmt::Debug};
 
@@ -24,7 +24,7 @@ fn main() -> Result<()> {
 
     if args.len() < 2 {
         if args[0] == "watch" {
-            EventLoop::start().map_err(|e| anyhow!("Unable to start listener: {e}"))?
+            Runtime::start().map_err(|e| anyhow!("Unable to start listener: {e}"))?
         } else {
             bail!("yctrl: Not enough arguments provided.")
         }

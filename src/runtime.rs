@@ -8,11 +8,9 @@ use std::{
 
 use crate::yabai;
 
-pub struct EventLoop {
-    // TODO: add state
-}
+pub struct Runtime {}
 
-impl EventLoop {
+impl Runtime {
     pub fn start() -> Result<()> {
         let socket_path = "/tmp/yctrl.socket";
         if fs::metadata(socket_path).is_ok() {
