@@ -35,10 +35,7 @@ impl Socket {
     }
 
     /// Send request to yabai socket and return string.
-    pub fn request<A>(self: &Self, args: &[A]) -> Result<String>
-    where
-        A: AsRef<[u8]> + Debug,
-    {
+    pub fn request<A: AsRef<[u8]> + Debug>(self: &Self, args: &[A]) -> Result<String> {
         let mut stream = self.send(args)?;
         let mut buf = Vec::new();
         stream.read_to_end(&mut buf)?;
@@ -55,13 +52,12 @@ impl Socket {
     }
 
     /// Send request to yabai socket and ignore response unless it is an error response.
-    pub fn execute<A>(self: &Self, args: &[A]) -> Result<()>
-    where
-        A: AsRef<[u8]> + Debug,
-    {
+    pub fn execute<A: AsRef<[u8]> + Debug>(self: &Self, args: &[A]) -> Result<()> {
         let mut buf = [0; 1];
         let mut stream = self.send(args)?;
-        stream.read_exact(&mut buf)?;
+
+        // Ingore overflow error
+        stream.read_exact(&mut buf).ok();
 
         if buf.get(0) != Some(&7) {
             Ok(())
