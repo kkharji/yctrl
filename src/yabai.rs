@@ -1,13 +1,13 @@
-pub mod events;
-pub mod models;
-pub mod socket;
+mod events;
+mod models;
+mod socket;
 
 use crate::constants::*;
 use anyhow::{bail, Error, Result};
 pub use events::*;
 
 pub use models::*;
-pub use socket::YabaiSocket;
+pub use socket::Socket;
 
 #[derive(Debug)]
 pub enum Event {

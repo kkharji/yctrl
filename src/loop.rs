@@ -6,7 +6,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use crate::yabai::Event;
+use crate::yabai;
 
 pub struct EventLoop {
     // TODO: add state
@@ -51,7 +51,8 @@ impl EventLoop {
         // Get current timestamp
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
         // Parse event
-        let event = Event::try_from(buffer).map_err(|e| anyhow!("{timestamp}: ERROR({:?})", e,))?;
+        let event =
+            yabai::Event::try_from(buffer).map_err(|e| anyhow!("{timestamp}: ERROR({:?})", e,))?;
         // log received event
         println!("{timestamp}: Event Received: {:?}", event);
 

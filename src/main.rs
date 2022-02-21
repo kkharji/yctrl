@@ -2,11 +2,7 @@ mod constants;
 mod r#loop;
 mod yabai;
 
-use self::{
-    constants::*,
-    r#loop::EventLoop,
-    yabai::{YabaiSocket, YabaiSpace, YabaiWindow},
-};
+use self::{constants::*, r#loop::EventLoop};
 use anyhow::{anyhow, bail, Result};
 use std::{env, fmt::Debug};
 
@@ -35,7 +31,7 @@ fn main() -> Result<()> {
     }
 
     // Get yabai scoket path
-    let yabai = YabaiSocket::new()?;
+    let yabai = yabai::Socket::new()?;
 
     // Fix when the user provided id for sub command.
     let mut command_pos = 1;
@@ -64,7 +60,7 @@ fn main() -> Result<()> {
 
 struct Window();
 impl Window {
-    fn space(yabai: &YabaiSocket, args: Vec<String>) -> Result<()> {
+    fn space(yabai: &yabai::Socket, args: Vec<String>) -> Result<()> {
         let select = args.last().unwrap();
         let command = args[1].clone();
         let space_args = vec!["space".to_string(), "--focus".to_string(), select.clone()];
@@ -90,7 +86,7 @@ impl Window {
 
     /// Toggle between largest and smallest window.
     /// TODO: Switch between left space and child windows
-    fn master(yabai: &YabaiSocket) -> Result<()> {
+    fn master(yabai: &yabai::Socket) -> Result<()> {
         yabai
             .execute(&["window", "--warp", "first"])
             .or_else(|_| yabai.execute(&["window", "--warp", "last"]))
@@ -109,7 +105,7 @@ impl Window {
         // }
     }
 
-    fn inc(yabai: &YabaiSocket, args: Vec<String>) -> Result<()> {
+    fn inc(yabai: &yabai::Socket, args: Vec<String>) -> Result<()> {
         let left = args.last().unwrap() == "left";
         let dir = if left { "-150:0" } else { "+150:0" };
         let args = &["window", "--resize", &format!("left:{dir}")];
@@ -122,7 +118,7 @@ impl Window {
         })
     }
 
-    fn handle(yabai: &YabaiSocket, args: Vec<String>) -> Result<()> {
+    fn handle(yabai: &yabai::Socket, args: Vec<String>) -> Result<()> {
         // Handle special cases
         match (args[1].as_str(), args[2].as_str()) {
             ("--space", _) => return Self::space(yabai, args),
@@ -147,17 +143,17 @@ impl Window {
         }
 
         // Get current space information.
-        let space: YabaiSpace = yabai.query(QUERY_CURRENT_SPACE)?;
+        let space: yabai::Space = yabai.query(QUERY_CURRENT_SPACE)?;
 
         // Should just change focus to next space window
         // TODO: support moving window to next/prev space and delete current space empty??
         if space.first_window == space.last_window && &command == "--focus" {
             let windows = yabai
-                .query::<Vec<YabaiWindow>, _>(QUERY_SPACE_WINDOWS)?
+                .query::<Vec<yabai::Window>, _>(QUERY_SPACE_WINDOWS)?
                 .into_iter()
                 // not sure why Hammerspoon create these windows
                 .filter(|w| w.subrole != "AXUnknown.Hammerspoon" && w.is_visible && !w.has_focus)
-                .collect::<Vec<YabaiWindow>>();
+                .collect::<Vec<yabai::Window>>();
 
             if windows.is_empty() {
                 println!("No windows left in space, trying {select} space instead of window");
@@ -187,7 +183,7 @@ impl Window {
 
 struct Space();
 impl Space {
-    fn handle(yabai: &YabaiSocket, args: Vec<String>) -> Result<()> {
+    fn handle(yabai: &yabai::Socket, args: Vec<String>) -> Result<()> {
         let select = args.last().unwrap();
 
         // Only further process when select != next/prev and succeeded

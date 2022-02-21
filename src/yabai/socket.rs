@@ -7,11 +7,11 @@ use std::{
     os::unix::net::UnixStream,
 };
 
-pub struct YabaiSocket {
+pub struct Socket {
     socket_path: String,
 }
 
-impl YabaiSocket {
+impl Socket {
     pub fn new() -> Result<Self> {
         let user = env::var("USER")?;
         let socket_path = format!("/tmp/yabai_{user}.socket");
