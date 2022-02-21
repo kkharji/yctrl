@@ -1,5 +1,3 @@
-pub mod types;
-
 use anyhow::{anyhow, bail, Context, Result};
 use std::{
     fs,
@@ -8,7 +6,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use self::types::Event;
+use crate::yabai::Event;
 
 pub struct EventLoop {
     // TODO: add state

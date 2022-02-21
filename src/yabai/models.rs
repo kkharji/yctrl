@@ -38,13 +38,6 @@ pub struct Frame {
     pub h: f32,
 }
 
-impl Frame {
-    /// Return the sum of w * h
-    pub fn sum(self: &Self) -> u32 {
-        return (self.w.round() as u32) + (self.h.round() as u32);
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct YabaiWindow {
     pub id: u32,
