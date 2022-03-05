@@ -2,12 +2,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Space {
-    id: u32,
+    pub id: u32,
     uuid: String,
     pub index: u32,
     pub label: String,
-    r#type: String,
-    display: u32,
+    pub r#type: String,
+    pub display: u32,
     pub windows: Vec<u32>,
     #[serde(rename(deserialize = "first-window"))]
     pub first_window: u32,
@@ -18,7 +18,7 @@ pub struct Space {
     #[serde(rename(deserialize = "is-visible"))]
     pub is_visible: bool,
     #[serde(rename(deserialize = "is-native-fullscreen"))]
-    is_native_fullscreen: bool,
+    pub is_native_fullscreen: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

@@ -1,4 +1,5 @@
 mod constants;
+mod handlers;
 mod runtime;
 mod yabai;
 

@@ -2,13 +2,19 @@ use anyhow::{bail, Context, Result};
 use std::fs;
 use tokio::net::{UnixListener, UnixStream};
 
-use crate::yabai;
+use crate::yabai::Event;
+use async_trait::async_trait;
 use tokio::io::AsyncReadExt;
 use tokio::time::Instant;
 use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::EnvFilter;
 
 pub struct Runtime {}
+
+#[async_trait]
+pub trait EventHandler {
+    async fn handle(&self) -> Result<()>;
+}
 
 impl Runtime {
     pub async fn start() -> Result<()> {
@@ -45,13 +51,11 @@ impl Runtime {
         // Get Request type
         let rtype: &str = arguments.remove(0);
 
-        if rtype == "event" {
-            // Parse event
-            let event = yabai::Event::try_from(arguments)?;
-            tracing::debug!("{:?}", event);
-        } else {
+        if rtype != "event" {
             bail!("Request type: '{rtype}' is not supported.")
         }
+
+        Event::try_from(arguments)?.handle().await?;
 
         let elapsed_time = now.elapsed();
         tracing::trace!(
