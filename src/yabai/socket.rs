@@ -1,11 +1,9 @@
 use anyhow::{bail, Context, Result};
 use serde::de::DeserializeOwned;
-use std::{
-    env,
-    fmt::Debug,
-    io::{Read, Write},
-    os::unix::net::UnixStream,
-};
+use std::env;
+use std::fmt::Debug;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::UnixStream;
 
 pub struct Socket {
     socket_path: String,
@@ -19,27 +17,32 @@ impl Socket {
     }
 
     /// Send given arguments to yabai and return a stream for further processing
-    fn send<A: AsRef<[u8]>>(self: &Self, args: &[A]) -> Result<UnixStream> {
-        let mut stream = UnixStream::connect(&self.socket_path)?;
-        stream.set_nonblocking(false)?;
+    async fn send<A: AsRef<[u8]>>(self: &Self, args: &[A]) -> Result<UnixStream> {
+        let mut stream = UnixStream::connect(&self.socket_path).await?;
+        stream.writable().await?;
+
         for arg in args.iter().map(AsRef::as_ref) {
             if arg.contains(&b'\0') {
                 bail!("Internal: Unexpected NUL byte in arg: {arg:?}");
             }
-            stream.write_all(arg)?;
-            stream.write_all(b"\0")?;
+            stream.write_all(arg).await?;
+            stream.write_all(b"\0").await?;
         }
-        stream.write_all(b"\0")?;
-        stream.flush()?;
+        stream.write_all(b"\0").await?;
+        stream.flush().await?;
         Ok(stream)
     }
 
     /// Send request to yabai socket and return string.
-    pub fn request<A: AsRef<[u8]> + Debug>(self: &Self, args: &[A]) -> Result<String> {
-        let mut stream = self.send(args)?;
+    pub async fn request<A: AsRef<[u8]> + Debug>(self: &Self, args: &[A]) -> Result<String> {
+        let mut stream = self.send(args).await?;
         let mut buf = Vec::new();
-        stream.read_to_end(&mut buf)?;
 
+        // Wait till the stream become readable.
+        stream.readable().await?;
+        // Read till EOF
+        stream.read_to_end(&mut buf).await?;
+        // Check if yabai errored
         if buf.get(0) == Some(&7) {
             anyhow::bail!(
                 "Yabai: {} {:?}",
@@ -52,13 +55,14 @@ impl Socket {
     }
 
     /// Send request to yabai socket and ignore response unless it is an error response.
-    pub fn execute<A: AsRef<[u8]> + Debug>(self: &Self, args: &[A]) -> Result<()> {
+    pub async fn execute<A: AsRef<[u8]> + Debug>(self: &Self, args: &[A]) -> Result<()> {
         let mut buf = [0; 1];
-        let mut stream = self.send(args)?;
-
-        // Ingore overflow error
-        stream.read_exact(&mut buf).ok();
-
+        let mut stream = self.send(args).await?;
+        // Wait till the stream become readable
+        stream.readable().await?;
+        // Ignore overflow error
+        stream.read_exact(&mut buf).await.ok();
+        // Check for error code
         if buf.get(0) != Some(&7) {
             Ok(())
         } else {
@@ -66,14 +70,14 @@ impl Socket {
         }
     }
 
-    pub fn query<T, A>(self: &Self, args: &[A]) -> Result<T>
+    pub async fn query<T, A>(self: &Self, args: &[A]) -> Result<T>
     where
         T: DeserializeOwned,
         A: AsRef<[u8]> + Debug,
     {
         loop {
             // NOTE: According to @slam, sometime queries return empty string.
-            let raw = self.request(args)?;
+            let raw = self.request(args).await?;
             if raw.is_empty() {
                 eprintln!("{:?} returned an empty string, retrying", args);
                 continue;

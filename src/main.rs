@@ -21,7 +21,8 @@ where
         && cmd != "make"
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let mut args: Vec<String> = env::args().skip(1).collect();
     let argc = args.len();
 
@@ -48,38 +49,38 @@ fn main() -> Result<()> {
     // Check if we should just redirect to yabai scoket.
     if should_just_redirect(&cmd, &args) {
         println!("redircting '{:?}' to yabai socket.", args);
-        return yabai.execute(&args);
+        return yabai.execute(&args).await;
     }
 
     // Handle User request
     match args[0].as_str() {
-        "window" => Window::handle(&yabai, args),
-        "space" => Space::handle(&yabai, args),
-        _ => yabai.execute(&args),
+        "window" => Window::handle(&yabai, args).await,
+        "space" => Space::handle(&yabai, args).await,
+        _ => yabai.execute(&args).await,
     }
 }
 
 struct Window();
 impl Window {
-    fn space(yabai: &yabai::Socket, args: Vec<String>) -> Result<()> {
+    async fn space(yabai: &yabai::Socket, args: Vec<String>) -> Result<()> {
         let select = args.last().unwrap();
         let command = args[1].clone();
         let space_args = vec!["space".to_string(), "--focus".to_string(), select.clone()];
 
         // Only further process next/prev, if not run the command as it.
-        if select != "next" && select != "prev" && yabai.execute(&args).is_ok() {
-            return Space::handle(yabai, space_args);
+        if select != "next" && select != "prev" && yabai.execute(&args).await.is_ok() {
+            return Space::handle(yabai, space_args).await;
         }
 
         // Try to execute as is
-        if yabai.execute(&args).is_ok() {
-            return Space::handle(yabai, space_args);
+        if yabai.execute(&args).await.is_ok() {
+            return Space::handle(yabai, space_args).await;
         }
 
         // Try position rather than order
         let pos = if select == "next" { "first" } else { "last" };
-        if yabai.execute(&["window", &command, pos]).is_ok() {
-            return Space::handle(yabai, space_args);
+        if yabai.execute(&["window", &command, pos]).await.is_ok() {
+            return Space::handle(yabai, space_args).await;
         }
 
         bail!("Fail handle space command!!! {:?}", args)
@@ -87,10 +88,13 @@ impl Window {
 
     /// Toggle between largest and smallest window.
     /// TODO: Switch between left space and child windows
-    fn master(yabai: &yabai::Socket) -> Result<()> {
-        yabai
-            .execute(&["window", "--warp", "first"])
-            .or_else(|_| yabai.execute(&["window", "--warp", "last"]))
+    async fn master(yabai: &yabai::Socket) -> Result<()> {
+        let succ = yabai.execute(&["window", "--warp", "first"]).await.is_ok();
+        if !succ {
+            yabai.execute(&["window", "--warp", "last"]).await?
+        }
+        Ok(())
+
         // let windows: Vec<YabaiWindow> = query(&socket_path, QUERY_SPACE_WINDOWS)?;
         // let current = windows.iter().find(|w| w.has_focus).unwrap();
         // let largest = windows.iter().max_by_key(|&w| w.frame.sum()).unwrap();
@@ -106,25 +110,26 @@ impl Window {
         // }
     }
 
-    fn inc(yabai: &yabai::Socket, args: Vec<String>) -> Result<()> {
+    async fn inc(yabai: &yabai::Socket, args: Vec<String>) -> Result<()> {
         let left = args.last().unwrap() == "left";
         let dir = if left { "-150:0" } else { "+150:0" };
         let args = &["window", "--resize", &format!("left:{dir}")];
 
-        yabai.execute(args).or_else(|_| {
+        if !yabai.execute(args).await.is_ok() {
             let mut args = args.to_vec();
-            let dir = format!("right:{dir}");
-            args.insert(2, &dir);
-            yabai.execute(&args)
-        })
+            let direction = format!("right:{dir}");
+            args.insert(2, &direction);
+            yabai.execute(&args).await?
+        }
+        Ok(())
     }
 
-    fn handle(yabai: &yabai::Socket, args: Vec<String>) -> Result<()> {
+    async fn handle(yabai: &yabai::Socket, args: Vec<String>) -> Result<()> {
         // Handle special cases
         match (args[1].as_str(), args[2].as_str()) {
-            ("--space", _) => return Self::space(yabai, args),
-            ("--inc", _) => return Self::inc(yabai, args),
-            ("--make", "master") => return Self::master(yabai),
+            ("--space", _) => return Self::space(yabai, args).await,
+            ("--inc", _) => return Self::inc(yabai, args).await,
+            ("--make", "master") => return Self::master(yabai).await,
             _ => (),
         };
 
@@ -134,23 +139,27 @@ impl Window {
         // Only further process next/prev, if not run the command as it.
         if select != "next" && select != "prev" {
             println!("got {select} redirecting to yabai socket");
-            return yabai.execute(&args);
+            return yabai.execute(&args).await;
         }
 
         // See if next/prev just works before doing anything else.
-        if yabai.execute(&args).is_ok() {
+        if yabai.execute(&args).await.is_ok() {
             println!("successfully ran {select} through yabai socket");
             return Ok(());
         }
 
-        // Get current space information.
-        let space: yabai::Space = yabai.query(QUERY_CURRENT_SPACE)?;
+        println!("Fail to run {select}, ... trying to determine next window");
 
+        // Get current space information.
+        let space: yabai::Space = yabai.query(QUERY_CURRENT_SPACE).await?;
+
+        println!("Got yabai spaces");
         // Should just change focus to next space window
         // TODO: support moving window to next/prev space and delete current space empty??
         if space.first_window == space.last_window && &command == "--focus" {
             let windows = yabai
-                .query::<Vec<yabai::Window>, _>(QUERY_SPACE_WINDOWS)?
+                .query::<Vec<yabai::Window>, _>(QUERY_SPACE_WINDOWS)
+                .await?
                 .into_iter()
                 // not sure why Hammerspoon create these windows
                 .filter(|w| w.subrole != "AXUnknown.Hammerspoon" && w.is_visible && !w.has_focus)
@@ -159,10 +168,10 @@ impl Window {
             if windows.is_empty() {
                 println!("No windows left in space, trying {select} space instead of window");
                 let args = vec!["space".to_string(), command, select.to_string()];
-                return Space::handle(yabai, args);
+                return Space::handle(yabai, args).await;
             } else {
                 let args = &["window", &command, &windows.first().unwrap().id.to_string()];
-                return yabai.execute(args);
+                return yabai.execute(args).await;
             }
         }
 
@@ -176,26 +185,30 @@ impl Window {
         println!("{select} window isn't found, trying to foucs {id}");
 
         // Finally, Try to focus by id or else focus to first window
-        yabai
-            .execute(&["window", &command, &id])
-            .or_else(|_| yabai.execute(&["window", &command, "first"]))
+        let succ = yabai.execute(&["window", &command, &id]).await.is_ok();
+        if !succ {
+            yabai.execute(&["window", &command, "first"]).await?
+        }
+        Ok(())
     }
 }
 
 struct Space();
 impl Space {
-    fn handle(yabai: &yabai::Socket, args: Vec<String>) -> Result<()> {
+    async fn handle(yabai: &yabai::Socket, args: Vec<String>) -> Result<()> {
         let select = args.last().unwrap();
 
         // Only further process when select != next/prev and succeeded
-        if select != "next" && select != "prev" && yabai.execute(&args).is_ok() {
+        if select != "next" && select != "prev" && yabai.execute(&args).await.is_ok() {
             return Ok(());
         }
 
         // See if next/prev just works before doing anything else.
-        yabai.execute(&args).or_else(|_| {
+        let succ = yabai.execute(&args).await.is_ok();
+        if !succ {
             let pos = if select == "next" { "first" } else { "last" };
-            yabai.execute(&["space", &args[1], pos])
-        })
+            yabai.execute(&["space", &args[1], pos]).await?
+        }
+        Ok(())
     }
 }
