@@ -55,11 +55,13 @@ impl Runtime {
             bail!("Request type: '{rtype}' is not supported.")
         }
 
-        Event::try_from(arguments)?.handle().await?;
+        let event = Event::try_from(arguments)?;
+        event.handle().await?;
 
         let elapsed_time = now.elapsed();
         tracing::trace!(
-            "Request handled in {} microseconds ..",
+            "{:?} is handled in {} microseconds ..",
+            event,
             elapsed_time.subsec_micros()
         );
 

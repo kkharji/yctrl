@@ -1,6 +1,6 @@
 use crate::runtime::EventHandler;
 use crate::yabai::{self, Socket, Space, SpaceEvent, Window};
-use anyhow::Result;
+use anyhow::{bail, Result};
 use async_trait::async_trait;
 use std::time::Duration;
 use tokio::time::sleep;
@@ -14,14 +14,53 @@ impl EventHandler for SpaceEvent {
 
         match self {
             SpaceEvent::Changed {
-                space_id: _,
+                space_id,
                 recent_space_id,
             } => {
                 // TODO: Make it configurable
-                destory_recent_space_when_empty(&yabai, recent_space_id).await
+                auto_focus_window(&yabai, space_id).await?;
+                destory_recent_space_when_empty(&yabai, recent_space_id).await?;
+                Ok(())
             }
         }
     }
+}
+
+/// Switch focus to current space open window if focus is in another space window
+async fn auto_focus_window(yabai: &Socket, space_id: &u32) -> Result<()> {
+    // TODO: Should only work if there is no focused window in current space.
+    let windows: Vec<Window> = yabai
+        .query::<Vec<Window>, _>(&["query", "--windows", "--space"])
+        .await?
+        .into_iter()
+        .filter(|w| w.subrole != "AXUnknown.Hammerspoon" && !w.is_minimized && !w.is_hidden)
+        .collect();
+
+    if windows.len() == 0 {
+        bail!("No More windows in current space with {space_id}");
+    }
+
+    if !windows.iter().any(|w| w.has_focus) {
+        tracing::debug!("Focus is stolen in some other space, fixing ...")
+    } else {
+        return Ok(());
+    }
+
+    let focus_window = windows.first().unwrap();
+    tracing::trace!("Switching focus to {}", focus_window.title);
+
+    let focus_window_id = focus_window.id.to_string();
+    let focus_args = &["window", "--focus", &focus_window_id];
+    let focus_result = yabai.execute(focus_args).await;
+
+    if let Err(e) = focus_result {
+        tracing::error!(
+            "Unable to change focus to {}. Cause: {e}",
+            focus_window.title
+        )
+    }
+
+    Ok(())
 }
 
 /// When recent space is empty, destory it.
