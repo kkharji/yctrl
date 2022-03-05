@@ -10,6 +10,8 @@ impl EventHandler for SpaceEvent {
     async fn handle(&self) -> Result<()> {
         let yabai = yabai::Socket::new()?;
 
+        tracing::info!("Handling {:?} Event", self);
+
         match self {
             SpaceEvent::Changed {
                 space_id: _,
