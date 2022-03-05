@@ -1,10 +1,8 @@
 use anyhow::{anyhow, bail, Context, Result};
-use std::{
-    fs,
-    io::Read,
-    os::unix::net::{UnixListener, UnixStream},
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::fs;
+use std::io::Read;
+use std::os::unix::net::{UnixListener, UnixStream};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::yabai;
 
@@ -48,11 +46,21 @@ impl Runtime {
         }
         // Get current timestamp
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
-        // Parse event
-        let event =
-            yabai::Event::try_from(buffer).map_err(|e| anyhow!("{timestamp}: ERROR({:?})", e,))?;
-        // log received event
-        println!("{timestamp}: Event Received: {:?}", event);
+        let buffer_string = String::from_utf8(buffer.to_vec())?;
+
+        let mut args: Vec<&str> = buffer_string.split_whitespace().collect();
+
+        // Get Request type
+        let rtype: &str = args.remove(0);
+
+        if rtype == "event" {
+            // Parse event
+            let event = yabai::Event::try_from(args)
+                .map_err(|e| anyhow!("{timestamp}: ERROR({:?})", e,))?;
+
+            // log received event
+            println!("{timestamp}: {:?}", event);
+        }
 
         Ok(())
 

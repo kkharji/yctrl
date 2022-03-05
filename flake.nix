@@ -19,7 +19,7 @@
     eachSystem [ system.aarch64-darwin system.x86_64-darwin ] (system:
       let
         pkgs = import nixpkgs {
-          system = system;
+          inherit system;
           overlays = [ devshell.overlay ];
         };
         naersk = pkgs.callPackage naersk-lib { };

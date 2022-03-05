@@ -35,7 +35,7 @@ pub enum SpaceEvent {
     /// Triggered when the active space has changed.
     ///
     /// Passes two arguments: $YABAI_SPACE_ID, $YABAI_RECENT_SPACE_ID
-    Changed,
+    Changed { space_id: u32, recent_space_id: u32 },
 }
 
 impl SpaceEvent {
@@ -45,7 +45,13 @@ impl SpaceEvent {
     ///
     /// [`Changed`]: SpaceEvent::Changed
     pub fn is_change_event(&self) -> bool {
-        matches!(self, Self::Changed)
+        matches!(
+            self,
+            Self::Changed {
+                space_id: _,
+                recent_space_id: _
+            }
+        )
     }
 }
 
@@ -125,31 +131,31 @@ pub enum WindowEvent {
     /// Triggered when a window is created + implicitly created at application launch.
     ///
     /// Passes one argument: $YABAI_WINDOW_ID
-    Created,
+    Created { window_id: u32 },
     /// Triggered when a window is destroyed + implicitly destroyed at application exit.
     ///
     /// Passes one argument: $YABAI_WINDOW_ID
-    Destroyed,
+    Destroyed { window_id: u32 },
     /// Triggered when a window becomes the key-window. +
     ///
     /// Passes one argument: $YABAI_WINDOW_ID
-    Focused,
+    Focused { window_id: u32 },
     /// Triggered when a window changes position. +
     ///
     /// Passes one argument: $YABAI_WINDOW_ID
-    Moved,
+    Moved { window_id: u32 },
     /// Triggered when a window changes dimensions.
     ///
     /// Passes one argument: $YABAI_WINDOW_ID
-    Resized,
+    Resized { window_id: u32 },
     /// Triggered when a window has been minimized. +
     ///
     /// Passes one argument: $YABAI_WINDOW_ID
-    Minimized,
+    Minimized { window_id: u32 },
     /// Triggered when a window has been deminimized. +
     ///
     /// Passes one argument: $YABAI_WINDOW_ID
-    Deminimized,
+    Deminimized { window_id: u32 },
     // Triggered when a window changes its title. +
     //
     // Passes one argument: $YABAI_WINDOW_ID
@@ -163,7 +169,7 @@ impl WindowEvent {
     ///
     /// [`Created`]: WindowEvent::Created
     pub fn is_create_event(&self) -> bool {
-        matches!(self, Self::Created)
+        matches!(self, Self::Created { window_id: _ })
     }
 
     /// Returns `true` if the window event is [`Destroyed`].
@@ -172,7 +178,7 @@ impl WindowEvent {
     ///
     /// [`Destroyed`]: WindowEvent::Destroyed
     pub fn is_destory_event(&self) -> bool {
-        matches!(self, Self::Destroyed)
+        matches!(self, Self::Destroyed { window_id: _ })
     }
 
     /// Returns `true` if the window event is [`Focused`].
@@ -181,7 +187,7 @@ impl WindowEvent {
     ///
     /// [`Focused`]: WindowEvent::Focused
     pub fn is_focus_event(&self) -> bool {
-        matches!(self, Self::Focused)
+        matches!(self, Self::Focused { window_id: _ })
     }
 
     /// Returns `true` if the window event is [`Moved`].
@@ -190,7 +196,7 @@ impl WindowEvent {
     ///
     /// [`Moved`]: WindowEvent::Moved
     pub fn is_move_event(&self) -> bool {
-        matches!(self, Self::Moved)
+        matches!(self, Self::Moved { window_id: _ })
     }
 
     /// Returns `true` if the window event is [`Resized`].
@@ -199,7 +205,7 @@ impl WindowEvent {
     ///
     /// [`Resized`]: WindowEvent::Resized
     pub fn is_resize_event(&self) -> bool {
-        matches!(self, Self::Resized)
+        matches!(self, Self::Resized { window_id: _ })
     }
 
     /// Returns `true` if the window event is [`Minimized`].
@@ -208,7 +214,7 @@ impl WindowEvent {
     ///
     /// [`Minimized`]: WindowEvent::Minimized
     pub fn is_minimize_event(&self) -> bool {
-        matches!(self, Self::Minimized)
+        matches!(self, Self::Minimized { window_id: _ })
     }
 
     /// Returns `true` if the window event is [`Deminimized`].
@@ -217,7 +223,7 @@ impl WindowEvent {
     ///
     /// [`Deminimized`]: WindowEvent::Deminimized
     pub fn is_deminimize_event(&self) -> bool {
-        matches!(self, Self::Deminimized)
+        matches!(self, Self::Deminimized { window_id: _ })
     }
 
     // Returns `true` if the window event is [`TitleChanged`].

@@ -24,27 +24,45 @@ pub enum Event {
     Application(ApplicationEvent),
 }
 
-impl TryFrom<&mut Vec<u8>> for Event {
+impl TryFrom<Vec<&str>> for Event {
     type Error = Error;
-    fn try_from(bytes: &mut Vec<u8>) -> Result<Self, Error> {
-        let val = &**bytes;
+    fn try_from(args: Vec<&str>) -> Result<Self, Error> {
+        let val = args.first().unwrap().as_bytes();
+
         // For some reason match won't work
         let event = if WINDOW_FOCUSED == val {
-            Self::Window(WindowEvent::Focused)
+            Self::Window(WindowEvent::Focused {
+                window_id: args.get(1).unwrap().parse::<u32>()?,
+            })
         } else if WINDOW_CREATED == val {
-            Self::Window(WindowEvent::Created)
+            Self::Window(WindowEvent::Created {
+                window_id: args.get(1).unwrap().parse::<u32>()?,
+            })
         } else if WINDOW_MOVED == val {
-            Self::Window(WindowEvent::Moved)
+            Self::Window(WindowEvent::Moved {
+                window_id: args.get(1).unwrap().parse::<u32>()?,
+            })
         } else if WINDOW_RESIZED == val {
-            Self::Window(WindowEvent::Resized)
+            Self::Window(WindowEvent::Resized {
+                window_id: args.get(1).unwrap().parse::<u32>()?,
+            })
         } else if WINDOW_DESTROYED == val {
-            Self::Window(WindowEvent::Destroyed)
+            Self::Window(WindowEvent::Destroyed {
+                window_id: args.get(1).unwrap().parse::<u32>()?,
+            })
         } else if WINDOW_MINIMIZED == val {
-            Self::Window(WindowEvent::Minimized)
+            Self::Window(WindowEvent::Minimized {
+                window_id: args.get(1).unwrap().parse::<u32>()?,
+            })
         } else if WINDOW_DEMINIMIZED == val {
-            Self::Window(WindowEvent::Deminimized)
+            Self::Window(WindowEvent::Deminimized {
+                window_id: args.get(1).unwrap().parse::<u32>()?,
+            })
         } else if SPACE_CHANGED == val {
-            Self::Space(SpaceEvent::Changed)
+            Self::Space(SpaceEvent::Changed {
+                space_id: args.get(1).unwrap().parse::<u32>()?,
+                recent_space_id: args.get(2).unwrap().parse::<u32>()?,
+            })
         } else if APPLICATION_VISIBLE == val {
             Self::Application(ApplicationEvent::Visible)
         } else if APPLICATION_HIDDEN == val {
@@ -69,7 +87,7 @@ impl TryFrom<&mut Vec<u8>> for Event {
 
         match event {
             Self::NotSupported => {
-                let event = std::str::from_utf8(&bytes)?;
+                let event = std::str::from_utf8(&val)?;
                 bail!("Event {event} is not supported.")
             }
             _ => Ok(event),
@@ -81,13 +99,10 @@ impl TryFrom<&mut Vec<u8>> for Event {
 fn parse_string_to_event() {
     macro_rules! should_parse {
         ($str: expr, $type: ident, $check_method: ident) => {{
-            let mut event_category = $str.as_bytes().to_vec();
-            match Event::try_from(&mut event_category) {
+            match Event::try_from($str) {
                 Ok(result) => {
                     if let Event::$type(event) = result {
                         assert!(event.$check_method())
-                    } else {
-                        panic!("enable to parse {}", $str)
                     }
                 }
                 Err(e) => panic!("{e}"),
@@ -95,19 +110,23 @@ fn parse_string_to_event() {
         }};
     }
 
-    should_parse!("mission_control_exit", MissionControl, is_exit_event);
-    should_parse!("mission_control_enter", MissionControl, is_enter_event);
+    should_parse!(vec!["mission_control_exit"], MissionControl, is_exit_event);
+    should_parse!(
+        vec!["mission_control_enter"],
+        MissionControl,
+        is_enter_event
+    );
 
-    should_parse!("window_moved", Window, is_move_event);
-    should_parse!("window_focused", Window, is_focus_event);
-    should_parse!("window_resized", Window, is_resize_event);
-    should_parse!("window_created", Window, is_create_event);
-    should_parse!("window_destroyed", Window, is_destory_event);
-    should_parse!("window_minimized", Window, is_minimize_event);
-    should_parse!("window_deminimized", Window, is_deminimize_event);
+    should_parse!(vec!["window_moved", "2"], Window, is_move_event);
+    should_parse!(vec!["window_focused", "2"], Window, is_focus_event);
+    should_parse!(vec!["window_resized", "2"], Window, is_resize_event);
+    should_parse!(vec!["window_created", "3"], Window, is_create_event);
+    should_parse!(vec!["window_destroyed", "4"], Window, is_destory_event);
+    should_parse!(vec!["window_minimized", "4"], Window, is_minimize_event);
+    should_parse!(vec!["window_deminimized", "5"], Window, is_deminimize_event);
 
-    should_parse!("application_hidden", Application, is_hidden_event);
-    should_parse!("application_visible", Application, is_visible_event);
+    should_parse!(vec!["application_hidden"], Application, is_hidden_event);
+    should_parse!(vec!["application_visible"], Application, is_visible_event);
 
     // should_parse!("window_title_changed", Window, is_title_change_event);
     // should_parse!("application_terminated", Application, is_terminate_event);
@@ -116,10 +135,10 @@ fn parse_string_to_event() {
     // should_parse!("application_activated", Application, is_activate_event);
     // should_parse!("application_deactivated", Application, is_deactivate_event);
 
-    should_parse!("space_changed", Space, is_change_event);
-    should_parse!("display_changed", Display, is_change_event);
-    should_parse!("display_added", Display, is_add_event);
-    should_parse!("display_moved", Display, is_move_event);
-    should_parse!("display_removed", Display, is_remove_event);
-    should_parse!("display_resized", Display, is_resize_event);
+    should_parse!(vec!["space_changed", "3", "4"], Space, is_change_event);
+    should_parse!(vec!["display_changed"], Display, is_change_event);
+    should_parse!(vec!["display_added"], Display, is_add_event);
+    should_parse!(vec!["display_moved"], Display, is_move_event);
+    should_parse!(vec!["display_removed"], Display, is_remove_event);
+    should_parse!(vec!["display_resized"], Display, is_resize_event);
 }

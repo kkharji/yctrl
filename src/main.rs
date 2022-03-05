@@ -2,9 +2,11 @@ mod constants;
 mod runtime;
 mod yabai;
 
-use self::{constants::*, runtime::Runtime};
+use self::constants::*;
+use self::runtime::Runtime;
 use anyhow::{anyhow, bail, Result};
-use std::{env, fmt::Debug};
+use std::env;
+use std::fmt::Debug;
 
 fn should_just_redirect<A>(cmd: &str, _args: &[A]) -> bool
 where
