@@ -27,7 +27,9 @@ async fn main() -> Result<()> {
     let argc = args.len();
 
     if argc == 0 {
-        Runtime::start().map_err(|e| anyhow!("Unable to start listener: {e}"))?
+        return Runtime::start()
+            .await
+            .map_err(|e| anyhow!("Unable to start listener: {e}"));
     } else if argc < 2 {
         bail!("yctrl: Not enough arguments provided.")
     }

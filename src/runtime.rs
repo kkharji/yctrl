@@ -1,16 +1,20 @@
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{bail, Context, Result};
 use std::fs;
-use std::io::Read;
-use std::os::unix::net::{UnixListener, UnixStream};
-use std::time::{SystemTime, UNIX_EPOCH};
+use tokio::net::{UnixListener, UnixStream};
 
 use crate::yabai;
+use tokio::io::AsyncReadExt;
+use tokio::time::Instant;
+use tracing_subscriber::fmt::format::FmtSpan;
+use tracing_subscriber::EnvFilter;
 
 pub struct Runtime {}
 
 impl Runtime {
-    pub fn start() -> Result<()> {
+    pub async fn start() -> Result<()> {
+        configure_tracing_subscriber()?;
         let socket_path = "/tmp/yctrl.socket";
+
         if fs::metadata(socket_path).is_ok() {
             fs::remove_file(socket_path).with_context(|| {
                 format!("could not delete previous socket at {:?}", socket_path)
@@ -18,58 +22,56 @@ impl Runtime {
         }
 
         let listener = UnixListener::bind(socket_path)?;
-        let mut buffer = Vec::new();
-
-        for stream in listener.incoming() {
-            match stream {
-                Ok(stream) => {
-                    if let Err(e) = Self::handle(&mut buffer, stream) {
-                        println!("{}", e)
-                    }
-                    buffer.clear();
+        tracing::info!("Listening on {socket_path}");
+        loop {
+            let (stream, _) = listener.accept().await?;
+            tokio::spawn(async move {
+                if let Err(e) = Self::handle(stream).await {
+                    tracing::error!("{:?}", e);
                 }
-                Err(e) => {
-                    bail!("Error: {e}");
-                }
-            };
+            });
         }
-
-        Ok(())
     }
 
-    fn handle(mut buffer: &mut Vec<u8>, mut s: UnixStream) -> Result<()> {
-        // Read stream to buf
-        s.read_to_end(&mut buffer)?;
-        // Remove of we got newline.
-        if buffer.last() == Some(&10) {
-            buffer.pop();
-        }
-        // Get current timestamp
-        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
-        let buffer_string = String::from_utf8(buffer.to_vec())?;
+    async fn handle(mut s: UnixStream) -> Result<()> {
+        tracing::trace!("Handling new request .. ");
+        let now = Instant::now();
+        let mut response = String::default();
 
-        let mut args: Vec<&str> = buffer_string.split_whitespace().collect();
+        s.read_to_string(&mut response).await?;
+
+        let mut arguments: Vec<&str> = response.trim().split_whitespace().collect();
 
         // Get Request type
-        let rtype: &str = args.remove(0);
+        let rtype: &str = arguments.remove(0);
 
         if rtype == "event" {
             // Parse event
-            let event = yabai::Event::try_from(args)
-                .map_err(|e| anyhow!("{timestamp}: ERROR({:?})", e,))?;
-
-            // log received event
-            println!("{timestamp}: {:?}", event);
+            let event = yabai::Event::try_from(arguments)?;
+            tracing::debug!("{:?}", event);
+        } else {
+            bail!("Request type: '{rtype}' is not supported.")
         }
 
-        Ok(())
+        let elapsed_time = now.elapsed();
+        tracing::trace!(
+            "Request handled in {} microseconds ..",
+            elapsed_time.subsec_micros()
+        );
 
-        // let now = Instant::now();
-        // event.handle()?
-        // let elapsed_time = now.elapsed();
-        // println!(
-        //     "Handling incomming event took {} seconds.",
-        //     elapsed_time.subsec_millis()
-        // );
+        Ok(())
     }
+}
+
+fn configure_tracing_subscriber() -> Result<()> {
+    // Configure tracing_subscriber
+    tracing_subscriber::fmt()
+        // Filter what traces are displayed based on RUST_LOG var: `RUST_LOG=chat=trace`
+        .with_env_filter(EnvFilter::from_default_env())
+        // Log events when `tracing` spans are created, entered, existed, or closed.
+        .with_span_events(FmtSpan::FULL)
+        // Set this subscriber as the default, to collect all traces emitted by the programmer.
+        .init();
+
+    Ok(())
 }

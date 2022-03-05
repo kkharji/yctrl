@@ -5,7 +5,9 @@ name = "yctrl-dev-shell"
 # packages = [ "cargo-watch" ]
 [git.hooks]
 enable = true
-
+[[env]]
+name ="RUST_LOG"
+value= "tokio::net=trace,yctrl=trace"
 
 [[commands]]
 package = "git-cliff"
