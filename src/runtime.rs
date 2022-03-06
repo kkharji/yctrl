@@ -1,11 +1,12 @@
-use anyhow::{bail, Context, Result};
-use std::fs;
-use tokio::net::{UnixListener, UnixStream};
-
 use crate::yabai::Event;
+use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
+use rand::rngs::StdRng;
+use rand::{Rng, SeedableRng};
+use std::fs;
 use tokio::io::AsyncReadExt;
-use tokio::time::Instant;
+use tokio::net::{UnixListener, UnixStream};
+use tracing::Level;
 use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::EnvFilter;
 
@@ -40,8 +41,9 @@ impl Runtime {
     }
 
     async fn handle(mut s: UnixStream) -> Result<()> {
-        tracing::trace!("Handling new request .. ");
-        let now = Instant::now();
+        let mut rng = StdRng::from_entropy();
+        let id = rng.gen_range(222..999);
+
         let mut response = String::default();
 
         s.read_to_string(&mut response).await?;
@@ -51,20 +53,17 @@ impl Runtime {
         // Get Request type
         let rtype: &str = arguments.remove(0);
 
+        let span = tracing::trace_span!("Request", "[{}]", id);
+
         if rtype != "event" {
             bail!("Request type: '{rtype}' is not supported.")
         }
 
         let event = Event::try_from(arguments)?;
+
+        tracing::event!(parent: &span, Level::DEBUG, "{}", event);
+
         event.handle().await?;
-
-        let elapsed_time = now.elapsed();
-        tracing::trace!(
-            "{:?} is handled in {} microseconds ..",
-            event,
-            elapsed_time.subsec_micros()
-        );
-
         Ok(())
     }
 }
@@ -75,7 +74,8 @@ fn configure_tracing_subscriber() -> Result<()> {
         // Filter what traces are displayed based on RUST_LOG var: `RUST_LOG=chat=trace`
         .with_env_filter(EnvFilter::from_default_env())
         // Log events when `tracing` spans are created, entered, existed, or closed.
-        .with_span_events(FmtSpan::FULL)
+        .with_span_events(FmtSpan::CLOSE)
+        .with_target(false)
         // Set this subscriber as the default, to collect all traces emitted by the programmer.
         .init();
 

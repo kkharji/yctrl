@@ -8,6 +8,7 @@ pub use events::*;
 
 pub use models::*;
 pub use socket::Socket;
+use std::fmt;
 
 #[derive(Debug)]
 pub enum Event {
@@ -141,4 +142,54 @@ fn parse_string_to_event() {
     should_parse!(vec!["display_moved"], Display, is_move_event);
     should_parse!(vec!["display_removed"], Display, is_remove_event);
     should_parse!(vec!["display_resized"], Display, is_resize_event);
+}
+
+// TODO: better have this pre event
+impl fmt::Display for Event {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Event::NotSupported => write!(f, "Not Supported"),
+            Event::MissionControl(event) => {
+                let phase = if let MissionControlEvent::Enter = event {
+                    "Enter"
+                } else {
+                    "Exit"
+                };
+                write!(f, "Mission Control {phase}")
+            }
+            Event::Window(event) => match event {
+                WindowEvent::Created { window_id } => write!(f, "Window Created ({window_id})"),
+                WindowEvent::Destroyed { window_id } => {
+                    write!(f, "Window Destroyed: ({window_id})")
+                }
+                WindowEvent::Focused { window_id } => write!(f, "Window Focused: ({window_id})"),
+                WindowEvent::Moved { window_id } => write!(f, "Window Moved: ({window_id})"),
+                WindowEvent::Resized { window_id } => write!(f, "Window Resized: ({window_id})"),
+                WindowEvent::Minimized { window_id } => {
+                    write!(f, "Window Minimized: ({window_id})")
+                }
+                WindowEvent::Deminimized { window_id } => {
+                    write!(f, "Window Deminimized: ({window_id})")
+                }
+            },
+            Event::Display(event) => match event {
+                DisplayEvent::Added => write!(f, "Display Added"),
+                DisplayEvent::Removed => write!(f, "Display Removed"),
+                DisplayEvent::Moved => write!(f, "Display Moved"),
+                DisplayEvent::Resized => write!(f, "Display Resized"),
+                DisplayEvent::Changed => write!(f, "Display Changed"),
+            },
+            Event::Space(event) => match event {
+                SpaceEvent::Changed {
+                    space_id,
+                    recent_space_id,
+                } => write!(f, "Space Changed (r:{recent_space_id}, n:{space_id})"),
+            },
+            Event::Application(event) => match event {
+                ApplicationEvent::Deactivated => write!(f, "Application Deactivated"),
+                ApplicationEvent::Visible => write!(f, "Application Visible"),
+                ApplicationEvent::Hidden => write!(f, "Application Hidden"),
+            },
+        }
+    }
 }

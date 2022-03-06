@@ -7,7 +7,6 @@ use async_trait::async_trait;
 impl EventHandler for WindowEvent {
     async fn handle(&self) -> Result<()> {
         let yabai = Socket::new()?;
-        tracing::info!("Handling {:?} Event", self);
         match self {
             WindowEvent::Created { window_id } => created(&yabai, window_id).await,
             WindowEvent::Destroyed { window_id } => destroyed(&yabai, window_id).await,
