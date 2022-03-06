@@ -1,11 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [unreleased]
+## [0.1.3] - 2022-03-06
 
 ### <!-- 0 -->Features
 
 - <a href="https://github.com/tami5/yctrl/commit/da3989c1c036bf9de22b86edbcc35f53440bbd72"><tt>da3989c</tt></a> Setup event listener socket
+- <a href="https://github.com/tami5/yctrl/commit/251be6b8e0589a9fac5eeed872e44be2e92941cd"><tt>251be6b</tt></a> Accept arguments like window_id
+- <a href="https://github.com/tami5/yctrl/commit/1d3174c52d172ecd7dbda87173c068b1399efc7b"><tt>1d3174c</tt></a> Auto destroy space without windows
+- <a href="https://github.com/tami5/yctrl/commit/7e0713788433ebca073bd4fc1881065347fa7fae"><tt>7e07137</tt></a> Auto focus on space change
+- <a href="https://github.com/tami5/yctrl/commit/af68b8c7cb88915c8d30ab451b46b717bfdd4042"><tt>af68b8c</tt></a> Improve tracing info
 
 ### <!-- 1 -->Bug Fixes
 
@@ -18,6 +22,12 @@ All notable changes to this project will be documented in this file.
 - <a href="https://github.com/tami5/yctrl/commit/0f14c3ed36bbe4e464d9dc9e0df3ec0075e6a1a4"><tt>0f14c3e</tt></a> Restructure source code
 - <a href="https://github.com/tami5/yctrl/commit/31073dcd1e76c04ca08224f09c1d696d248fbf12"><tt>31073dc</tt></a> Remove Yabai* from yabai.rs exports
 - <a href="https://github.com/tami5/yctrl/commit/a6f6efd7c32cc5664d215fa4b610d2c972df127c"><tt>a6f6efd</tt></a> Rename loop.rs runtime.rs
+- <a href="https://github.com/tami5/yctrl/commit/18d51b92b929f8c9cd5dd5538a95f30767fd34f6"><tt>18d51b9</tt></a> Switch to async operations with tokio
+- <a href="https://github.com/tami5/yctrl/commit/f44554a98c3ac42bb0f74b202f14c9a660c92868"><tt>f44554a</tt></a> Async processing
+
+### <!-- 3 -->Enhancement
+
+- <a href="https://github.com/tami5/yctrl/commit/1917ddec9431dd867ca9bc7dbae1f7e0e2151fc5"><tt>1917dde</tt></a> Start yctrl runtime with no arguments
 
 ### Miscellaneous Tasks
 
@@ -28,6 +38,12 @@ All notable changes to this project will be documented in this file.
 - <a href="https://github.com/tami5/yctrl/commit/e7b000e003d70feea014aa00f613a74c4531c4c3"><tt>e7b000e</tt></a> Add documentation to events
 - <a href="https://github.com/tami5/yctrl/commit/8cd8d02892cf148312d8f730721b9c8d988fce19"><tt>8cd8d02</tt></a> Ignore irrelevant application events
 - <a href="https://github.com/tami5/yctrl/commit/887d77ba7d21fe9458e497356b74d2174e76dbac"><tt>887d77b</tt></a> Reignore buffer overflow error
+- <a href="https://github.com/tami5/yctrl/commit/6419afd7793ab47706df8b68c233e6264332a954"><tt>6419afd</tt></a> Changelog update
+- <a href="https://github.com/tami5/yctrl/commit/e3164cb9afb51e4b53a4b513e48786e6d0d8dec2"><tt>e3164cb</tt></a> Setup window event handlers
+
+### Wip
+
+- <a href="https://github.com/tami5/yctrl/commit/0adff102ac6418f6332f2bb2657d9883ebe69d84"><tt>0adff10</tt></a> Keep focus on current space on window destroy.
 
 ## [0.1.2] - 2022-02-20
 
