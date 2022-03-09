@@ -37,8 +37,16 @@ In yabairc:
 
 ```bash
 yctrl &
-yabai -m signal --add event='space_changed' action='echo event space_changed $YABAI_SPACE_ID $YABAI_RECENT_SPACE_ID | nc -U -w 1 /tmp/yctrl.socket'
-yabai -m signal --add event='window_destroyed' action='echo event window_destroyed $YABAI_WINDOW_ID | nc -U -w 1 /tmp/yctrl.socket'
+
+# Setup event listeners
+send() {; echo "echo event $@ | nc -U -w 1 /tmp/yctrl.socket"; }
+
+yabai -m signal --add event='space_changed' action=$(send 'space_changed $YABAI_SPACE_ID $YABAI_RECENT_SPACE_ID')
+yabai -m signal --add event='window_destroyed' action=$(send 'window_destroyed $YABAI_WINDOW_ID')
+# Disable auto close of empty spaces
+yctrl config  yctrl_auto_close_empty_spaces false
+yctrl config window_topmost on # redirect to yabai socket
+
 ```
 
 ## Installation

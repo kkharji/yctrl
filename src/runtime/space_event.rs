@@ -1,5 +1,5 @@
-use crate::state::SharedState;
 use crate::runtime::EventHandler;
+use crate::state::SharedState;
 use crate::yabai::{self, Socket, Space, SpaceEvent, Window};
 use anyhow::{bail, Result};
 use async_trait::async_trait;
@@ -8,8 +8,9 @@ use tokio::time::sleep;
 
 #[async_trait]
 impl EventHandler for SpaceEvent {
-    async fn handle(&self, _state: SharedState) -> Result<()> {
+    async fn handle(&self, state: SharedState) -> Result<()> {
         let yabai = yabai::Socket::new()?;
+        let config = &state.lock().await.config;
 
         match self {
             SpaceEvent::Changed {
@@ -18,7 +19,9 @@ impl EventHandler for SpaceEvent {
             } => {
                 // TODO: Make it configurable
                 auto_focus_window(&yabai, space_id).await?;
-                destory_recent_space_when_empty(&yabai, recent_space_id).await?;
+                if config.auto_close_empty_spaces {
+                    destory_recent_space_when_empty(&yabai, recent_space_id).await?;
+                }
                 Ok(())
             }
         }
