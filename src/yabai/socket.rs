@@ -1,9 +1,16 @@
+use super::models::{Space, Window};
 use anyhow::{bail, Context, Result};
 use serde::de::DeserializeOwned;
 use std::env;
 use std::fmt::Debug;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::UnixStream;
+
+const QUERY_GET_SPACE_WINDOWS: &[&str; 3] = &["query", "--windows", "--space"];
+const QUERY_GET_FOCUSED_WINDOW: &[&str; 3] = &["query", "--windows", "--window"];
+const QUERY_GET_FOCUSED_SPACE: &[&str; 3] = &["query", "--spaces", "--space"];
+const QUERY_GET_ALL_WINDOWS: &[&str; 2] = &["query", "--windows"];
+const QUERY_GET_ALL_SPACES: &[&str; 2] = &["query", "--spaces"];
 
 pub struct Socket {
     socket_path: String,
@@ -85,5 +92,34 @@ impl Socket {
             return serde_json::from_str(&raw)
                 .with_context(|| format!("Failed to desrialize JSON: {raw}"));
         }
+    }
+
+    pub async fn focused_space(self: &Self) -> Result<Space> {
+        self.query::<Space, _>(QUERY_GET_FOCUSED_SPACE).await
+    }
+
+    pub async fn focused_window(self: &Self) -> Result<Window> {
+        self.query::<Window, _>(QUERY_GET_FOCUSED_WINDOW).await
+    }
+
+    pub async fn spaces(self: &Self, _display: &str) -> Result<Vec<Space>> {
+        // reserved for current display/all displays
+        self.query::<Vec<Space>, _>(QUERY_GET_ALL_SPACES).await
+    }
+
+    pub async fn windows(self: &Self, space: &str) -> Result<Vec<Window>> {
+        let windows = if space == "current" {
+            self.query::<Vec<Window>, _>(QUERY_GET_SPACE_WINDOWS)
+                .await?
+        } else if space == "all" {
+            self.query::<Vec<Window>, _>(QUERY_GET_ALL_WINDOWS).await?
+        } else {
+            self.query::<Vec<Window>, _>(&["query", "--windows", "--space", space])
+                .await?
+        };
+        Ok(windows
+            .into_iter()
+            .filter(|w| w.subrole != "AXUnknown.Hammerspoon" && !w.is_minimized && !w.is_hidden)
+            .collect())
     }
 }

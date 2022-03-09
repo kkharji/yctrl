@@ -3,7 +3,6 @@ mod runtime;
 mod state;
 mod yabai;
 
-use self::constants::*;
 use anyhow::{anyhow, bail, Result};
 use std::env;
 use std::fmt::Debug;
@@ -161,19 +160,13 @@ impl Window {
         println!("Fail to run {select}, ... trying to determine next window");
 
         // Get current space information.
-        let space: yabai::Space = yabai.query(QUERY_CURRENT_SPACE).await?;
+        let space = yabai.focused_space().await?;
 
         println!("Got yabai spaces");
         // Should just change focus to next space window
         // TODO: support moving window to next/prev space and delete current space empty??
         if space.first_window == space.last_window && &command == "--focus" {
-            let windows = yabai
-                .query::<Vec<yabai::Window>, _>(QUERY_SPACE_WINDOWS)
-                .await?
-                .into_iter()
-                // not sure why Hammerspoon create these windows
-                .filter(|w| w.subrole != "AXUnknown.Hammerspoon" && w.is_visible && !w.has_focus)
-                .collect::<Vec<yabai::Window>>();
+            let windows = yabai.windows("current").await?;
 
             if windows.is_empty() {
                 println!("No windows left in space, trying {select} space instead of window");

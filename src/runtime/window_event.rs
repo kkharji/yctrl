@@ -1,7 +1,5 @@
-use crate::{QUERY_CURRENT_SPACE, QUERY_SPACE_WINDOWS};
-use crate::yabai::Space;
-use crate::state::SharedState;
 use crate::runtime::EventHandler;
+use crate::state::SharedState;
 use crate::yabai::{Socket, Window, WindowEvent};
 use anyhow::Result;
 use async_trait::async_trait;
@@ -39,24 +37,27 @@ async fn moved(_yabai: &Socket, _window_id: &u32) -> Result<()> {
 }
 
 async fn focused(yabai: &Socket, window_id: &u32) -> Result<()> {
-
-    let space = yabai.query::<Space, _>(QUERY_CURRENT_SPACE).await?;
+    let space = yabai.focused_space().await?;
 
     tracing::trace!("Current Focus: {:?}", window_id);
 
     if !space.windows.contains(window_id) {
-        tracing::warn!("Window no longer exists in current space. Switching to last window: {}", space.last_window);
-        yabai.execute(&["window", "--focus", &format!("{}", space.last_window)]).await?;
+        tracing::warn!(
+            "Window no longer exists in current space. Switching to last window: {}",
+            space.last_window
+        );
+        yabai
+            .execute(&["window", "--focus", &format!("{}", space.last_window)])
+            .await?;
     }
 
     Ok(())
 }
 
 async fn destroyed(yabai: &Socket, _window_id: &u32) -> Result<()> {
-    // TODO: Make this configurable
     // NOTE: This maybe better done through trying to query current window '--windows --window'?
     let windows = yabai
-        .query::<Vec<Window>, _>(QUERY_SPACE_WINDOWS)
+        .windows("current")
         .await?
         .into_iter()
         .filter(|w| w.has_focus)

@@ -31,12 +31,12 @@ impl EventHandler for SpaceEvent {
 /// Switch focus to current space open window if focus is in another space window
 async fn auto_focus_window(yabai: &Socket, space_id: &u32) -> Result<()> {
     // TODO: Should only work if there is no focused window in current space.
-    let windows: Vec<Window> = yabai
-        .query::<Vec<Window>, _>(&["query", "--windows", "--space"])
+    let windows = yabai
+        .windows("current")
         .await?
         .into_iter()
-        .filter(|w| w.subrole != "AXUnknown.Hammerspoon" && !w.is_minimized && !w.is_hidden)
-        .collect();
+        .filter(|w| !w.is_minimized && !w.is_hidden)
+        .collect::<Vec<Window>>();
 
     if windows.len() == 0 {
         bail!("No More windows in current space with {space_id}");
@@ -48,7 +48,11 @@ async fn auto_focus_window(yabai: &Socket, space_id: &u32) -> Result<()> {
         return Ok(());
     }
 
-    if yabai.execute(&["window", "--focus", "mouse"]).await.is_err() {
+    if yabai
+        .execute(&["window", "--focus", "mouse"])
+        .await
+        .is_err()
+    {
         let focus_window = windows.first().unwrap();
         tracing::trace!("Switching focus to {}", focus_window.title);
 
@@ -60,7 +64,7 @@ async fn auto_focus_window(yabai: &Socket, space_id: &u32) -> Result<()> {
             tracing::error!(
                 "Unable to change focus to {}. Cause: {e}",
                 focus_window.title
-                )
+            )
         }
     };
     Ok(())
@@ -74,7 +78,7 @@ async fn destory_recent_space_when_empty(yabai: &Socket, recent_space_id: &u32) 
 
     // Get most recent space object.
     let rspace = yabai
-        .query::<Vec<Space>, _>(&["query", "--spaces"])
+        .spaces("current")
         .await?
         .into_iter()
         .filter(|s| &s.id == recent_space_id)
@@ -85,12 +89,7 @@ async fn destory_recent_space_when_empty(yabai: &Socket, recent_space_id: &u32) 
     let rspace_idx = rspace.index.to_string();
 
     // Get recent space valid windows.
-    let rspace_windows = yabai
-        .query::<Vec<Window>, _>(&["query", "--windows", "--space", &rspace_idx])
-        .await?
-        .into_iter()
-        .filter(|w| w.subrole != "AXUnknown.Hammerspoon")
-        .collect::<Vec<Window>>();
+    let rspace_windows = yabai.windows(&rspace_idx).await?;
 
     // Get minimized window count
     let rspace_hidden_windows_count = rspace_windows
