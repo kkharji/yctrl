@@ -27,9 +27,9 @@ yctrl window focus next
 - [ ] Fix installation by nix overlay
 - [ ] Auto create space by id if it doesn't exists.
 - [ ] Move to next/prev space should auto created sapce if it doesn't exists
-- [ ] Make side-effects configurable.
 - [ ] Maintain internal state of yabai objects
 - [ ] Improve next/prev to account for floating and unmanged windows?
+- [x] Make side-effects configurable.
 
 ## Setup
 

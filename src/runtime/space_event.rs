@@ -1,3 +1,4 @@
+use crate::state::SharedState;
 use crate::runtime::EventHandler;
 use crate::yabai::{self, Socket, Space, SpaceEvent, Window};
 use anyhow::{bail, Result};
@@ -7,7 +8,7 @@ use tokio::time::sleep;
 
 #[async_trait]
 impl EventHandler for SpaceEvent {
-    async fn handle(&self) -> Result<()> {
+    async fn handle(&self, _state: SharedState) -> Result<()> {
         let yabai = yabai::Socket::new()?;
 
         match self {

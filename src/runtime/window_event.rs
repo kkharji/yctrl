@@ -1,3 +1,4 @@
+use crate::state::SharedState;
 use crate::runtime::EventHandler;
 use crate::yabai::{Socket, Window, WindowEvent};
 use anyhow::Result;
@@ -5,7 +6,7 @@ use async_trait::async_trait;
 
 #[async_trait]
 impl EventHandler for WindowEvent {
-    async fn handle(&self) -> Result<()> {
+    async fn handle(&self, _state: SharedState) -> Result<()> {
         let yabai = Socket::new()?;
         match self {
             WindowEvent::Created { window_id } => created(&yabai, window_id).await,

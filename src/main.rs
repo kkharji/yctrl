@@ -1,10 +1,9 @@
 mod constants;
-mod handlers;
 mod runtime;
+mod state;
 mod yabai;
 
 use self::constants::*;
-use self::runtime::Runtime;
 use anyhow::{anyhow, bail, Result};
 use std::env;
 use std::fmt::Debug;
@@ -28,7 +27,7 @@ async fn main() -> Result<()> {
     let argc = args.len();
 
     if argc == 0 {
-        return Runtime::start()
+        return runtime::start()
             .await
             .map_err(|e| anyhow!("Unable to start listener: {e}"));
     } else if argc < 2 {
@@ -44,21 +43,29 @@ async fn main() -> Result<()> {
         command_pos = 2;
     }
 
-    // Correct format: Note should maybe check if it's already correct
-    let command = args.get_mut(command_pos).unwrap();
-    let cmd = command.clone();
-    *command = format!("--{command}");
-
-    // Check if we should just redirect to yabai scoket.
-    if should_just_redirect(&cmd, &args) {
-        println!("redircting '{:?}' to yabai socket.", args);
-        return yabai.execute(&args).await;
+    if args[0].as_str() != "config" {
+        // Correct format: Note should maybe check if it's already correct
+        let command = args.get_mut(command_pos).unwrap();
+        let cmd = command.clone();
+        *command = format!("--{command}");
+        // Check if we should just redirect to yabai scoket.
+        if should_just_redirect(&cmd, &args) {
+            println!("redircting '{:?}' to yabai socket.", args);
+            return yabai.execute(&args).await;
+        }
     }
 
     // Handle User request
     match args[0].as_str() {
         "window" => Window::handle(&yabai, args).await,
         "space" => Space::handle(&yabai, args).await,
+        "config" => {
+            if args[1].as_str().contains("yctrl") {
+                runtime::execute(&args).await
+            } else {
+                yabai.execute(&args).await
+            }
+        }
         _ => yabai.execute(&args).await,
     }
 }
