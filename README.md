@@ -20,15 +20,15 @@ yctrl window focus next
 - `focus next/prev`: accounts for floating windows (isn't that the default?).
 - `focus next/prev`: If current space has only one window then window next would go to next/prev space window
 - `event`: Auto close empty spaces.
-- `event`: Ensure focus is in the current space on window destory and space change (wip)
+- `event`: keep focus in current space last window. (space change, new window in different space, window destroy)
 
 ## Someday
 
 - [ ] Fix installation by nix overlay
 - [ ] Auto create space by id if it doesn't exists.
-- [ ] Move to next/prev space should auto created sapce if it doesn't exists
+- [ ] Move to next/prev space should auto created space if it doesn't exists
 - [ ] Maintain internal state of yabai objects
-- [ ] Improve next/prev to account for floating and unmanged windows?
+- [ ] Improve next/prev to account for floating and unmanaged windows?
 - [x] Make side-effects configurable.
 
 ## Setup

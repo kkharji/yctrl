@@ -1,3 +1,5 @@
+use crate::{QUERY_CURRENT_SPACE, QUERY_SPACE_WINDOWS};
+use crate::yabai::Space;
 use crate::state::SharedState;
 use crate::runtime::EventHandler;
 use crate::yabai::{Socket, Window, WindowEvent};
@@ -36,19 +38,29 @@ async fn moved(_yabai: &Socket, _window_id: &u32) -> Result<()> {
     Ok(())
 }
 
-async fn focused(_yabai: &Socket, _window_id: &u32) -> Result<()> {
+async fn focused(yabai: &Socket, window_id: &u32) -> Result<()> {
+
+    let space = yabai.query::<Space, _>(QUERY_CURRENT_SPACE).await?;
+
+    tracing::trace!("Current Focus: {:?}", window_id);
+
+    if !space.windows.contains(window_id) {
+        tracing::warn!("Window no longer exists in current space. Switching to last window: {}", space.last_window);
+        yabai.execute(&["window", "--focus", &format!("{}", space.last_window)]).await?;
+    }
+
     Ok(())
 }
 
 async fn destroyed(yabai: &Socket, _window_id: &u32) -> Result<()> {
     // TODO: Make this configurable
     // NOTE: This maybe better done through trying to query current window '--windows --window'?
-    let windows: Vec<Window> = yabai
-        .query::<Vec<Window>, _>(&["query", "--windows", "--space"])
+    let windows = yabai
+        .query::<Vec<Window>, _>(QUERY_SPACE_WINDOWS)
         .await?
         .into_iter()
         .filter(|w| w.has_focus)
-        .collect();
+        .collect::<Vec<Window>>();
 
     // NOTE: this hack doesn't always works. My use case was closing a window in with hammerspoon
     // console, which for some reason is ignored. It does focus on the console, but then switch
