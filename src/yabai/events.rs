@@ -1,6 +1,22 @@
-#![allow(dead_code)]
-
+use crate::constants::*;
+use anyhow::{bail, Error, Result};
+use std::fmt;
 use std::fmt::Debug;
+
+#[derive(Debug)]
+pub enum Event {
+    NotSupported,
+    /// Mission Control specfic events
+    MissionControl(MissionControlEvent),
+    /// Window specfic event
+    Window(WindowEvent),
+    /// Display specfic events
+    Display(DisplayEvent),
+    /// Space specfic events
+    Space(SpaceEvent),
+    /// Application specfic events
+    Application(ApplicationEvent),
+}
 
 #[derive(Debug, PartialEq)]
 pub enum MissionControlEvent {
@@ -10,49 +26,12 @@ pub enum MissionControlEvent {
     Exit,
 }
 
-impl MissionControlEvent {
-    /// Returns `true` if the mission control event is [`Enter`].
-    ///
-    /// i.e. did mission control activate?
-    ///
-    /// [`Enter`]: MissionControlEvent::Enter
-    pub fn is_enter_event(&self) -> bool {
-        matches!(self, Self::Enter)
-    }
-
-    /// Returns `true` if the mission control event is [`Exit`].
-    ///
-    /// i.e. did mission control deactivates?
-    ///
-    /// [`Exit`]: MissionControlEvent::Exit
-    pub fn is_exit_event(&self) -> bool {
-        matches!(self, Self::Exit)
-    }
-}
-
 #[derive(Debug)]
 pub enum SpaceEvent {
     /// Triggered when the active space has changed.
     ///
     /// Passes two arguments: $YABAI_SPACE_ID, $YABAI_RECENT_SPACE_ID
     Changed { space_id: u32, recent_space_id: u32 },
-}
-
-impl SpaceEvent {
-    /// Returns `true` if the space event is [`Changed`].
-    ///
-    /// i.e. did active space change?
-    ///
-    /// [`Changed`]: SpaceEvent::Changed
-    pub fn is_change_event(&self) -> bool {
-        matches!(
-            self,
-            Self::Changed {
-                space_id: _,
-                recent_space_id: _
-            }
-        )
-    }
 }
 
 #[derive(Debug)]
@@ -77,53 +56,6 @@ pub enum DisplayEvent {
     ///
     /// Passes two arguments: $YABAI_DISPLAY_ID, $YABAI_RECENT_DISPLAY_ID
     Changed,
-}
-
-impl DisplayEvent {
-    /// Returns `true` if the display event is [`Added`].
-    ///
-    /// i.e. did a new display got attached?
-    ///
-    /// [`Added`]: DisplayEvent::Added
-    pub fn is_add_event(&self) -> bool {
-        matches!(self, Self::Added)
-    }
-
-    /// Returns `true` if the display event is [`Removed`].
-    ///
-    /// i.e. did a display got removed?
-    ///
-    /// [`Removed`]: DisplayEvent::Removed
-    pub fn is_remove_event(&self) -> bool {
-        matches!(self, Self::Removed)
-    }
-
-    /// Returns `true` if the display event is [`Moved`].
-    ///
-    /// i.e. did a display got moved?
-    ///
-    /// [`Moved`]: DisplayEvent::Moved
-    pub fn is_move_event(&self) -> bool {
-        matches!(self, Self::Moved)
-    }
-
-    /// Returns `true` if the display event is [`Resized`].
-    ///
-    /// i.e. did a display got resized?
-    ///
-    /// [`Resized`]: DisplayEvent::Resized
-    pub fn is_resize_event(&self) -> bool {
-        matches!(self, Self::Resized)
-    }
-
-    /// Returns `true` if the display event is [`Changed`].
-    ///
-    /// i.e. did focus switch to different display
-    ///
-    /// [`Changed`]: DisplayEvent::Changed
-    pub fn is_change_event(&self) -> bool {
-        matches!(self, Self::Changed)
-    }
 }
 
 #[derive(Debug)]
@@ -162,80 +94,6 @@ pub enum WindowEvent {
     // TitleChanged,
 }
 
-impl WindowEvent {
-    /// Returns `true` if the window event is [`Created`].
-    ///
-    /// i.e. a new window created in a current space.
-    ///
-    /// [`Created`]: WindowEvent::Created
-    pub fn is_create_event(&self) -> bool {
-        matches!(self, Self::Created { window_id: _ })
-    }
-
-    /// Returns `true` if the window event is [`Destroyed`].
-    ///
-    /// i.e. a window destroyed in a current space.
-    ///
-    /// [`Destroyed`]: WindowEvent::Destroyed
-    pub fn is_destory_event(&self) -> bool {
-        matches!(self, Self::Destroyed { window_id: _ })
-    }
-
-    /// Returns `true` if the window event is [`Focused`].
-    ///
-    /// i.e. a new window gained focus
-    ///
-    /// [`Focused`]: WindowEvent::Focused
-    pub fn is_focus_event(&self) -> bool {
-        matches!(self, Self::Focused { window_id: _ })
-    }
-
-    /// Returns `true` if the window event is [`Moved`].
-    ///
-    /// i.e. a window position has changed
-    ///
-    /// [`Moved`]: WindowEvent::Moved
-    pub fn is_move_event(&self) -> bool {
-        matches!(self, Self::Moved { window_id: _ })
-    }
-
-    /// Returns `true` if the window event is [`Resized`].
-    ///
-    /// i.e. a window has been resized
-    ///
-    /// [`Resized`]: WindowEvent::Resized
-    pub fn is_resize_event(&self) -> bool {
-        matches!(self, Self::Resized { window_id: _ })
-    }
-
-    /// Returns `true` if the window event is [`Minimized`].
-    ///
-    /// i.e. a window got minimized
-    ///
-    /// [`Minimized`]: WindowEvent::Minimized
-    pub fn is_minimize_event(&self) -> bool {
-        matches!(self, Self::Minimized { window_id: _ })
-    }
-
-    /// Returns `true` if the window event is [`Deminimized`].
-    ///
-    /// i.e. a window got deminimized
-    ///
-    /// [`Deminimized`]: WindowEvent::Deminimized
-    pub fn is_deminimize_event(&self) -> bool {
-        matches!(self, Self::Deminimized { window_id: _ })
-    }
-
-    // Returns `true` if the window event is [`TitleChanged`].
-    //
-    // i.e. a window got title got updated.
-    //
-    // [`TitleChanged`]: WindowEvent::TitleChanged
-    // pub fn is_title_change_event(&self) -> bool {
-    //     matches!(self, Self::TitleChanged)
-    // }
-}
-
 #[derive(Debug)]
 pub enum ApplicationEvent {
     /// Triggered when a new application is launched.
@@ -257,7 +115,7 @@ pub enum ApplicationEvent {
     /// Triggered when an application is deactivated.
     ///
     /// Passes one argument: $YABAI_PROCESS_ID
-    Deactivated,
+    // Deactivated,
     /// Triggered when an application is unhidden.
     ///
     /// Passes one argument: $YABAI_PROCESS_ID
@@ -267,68 +125,123 @@ pub enum ApplicationEvent {
     /// Passes one argument: $YABAI_PROCESS_ID
     Hidden,
 }
+impl TryFrom<Vec<&str>> for Event {
+    type Error = Error;
+    fn try_from(args: Vec<&str>) -> Result<Self, Error> {
+        let val = args.first().unwrap().as_bytes();
 
-impl ApplicationEvent {
-    /// Returns `true` if the application event is [`Launched`].
-    ///
-    /// i.e. a new application launched
-    ///
-    /// [`Launched`]: ApplicationEvent::Launched
-    // pub fn is_launch_event(&self) -> bool {
-    //     matches!(self, Self::Launched)
-    // }
+        // For some reason match won't work
+        let event = if WINDOW_FOCUSED == val {
+            Self::Window(WindowEvent::Focused {
+                window_id: args.get(1).unwrap().parse::<u32>()?,
+            })
+        } else if WINDOW_CREATED == val {
+            Self::Window(WindowEvent::Created {
+                window_id: args.get(1).unwrap().parse::<u32>()?,
+            })
+        } else if WINDOW_MOVED == val {
+            Self::Window(WindowEvent::Moved {
+                window_id: args.get(1).unwrap().parse::<u32>()?,
+            })
+        } else if WINDOW_RESIZED == val {
+            Self::Window(WindowEvent::Resized {
+                window_id: args.get(1).unwrap().parse::<u32>()?,
+            })
+        } else if WINDOW_DESTROYED == val {
+            Self::Window(WindowEvent::Destroyed {
+                window_id: args.get(1).unwrap().parse::<u32>()?,
+            })
+        } else if WINDOW_MINIMIZED == val {
+            Self::Window(WindowEvent::Minimized {
+                window_id: args.get(1).unwrap().parse::<u32>()?,
+            })
+        } else if WINDOW_DEMINIMIZED == val {
+            Self::Window(WindowEvent::Deminimized {
+                window_id: args.get(1).unwrap().parse::<u32>()?,
+            })
+        } else if SPACE_CHANGED == val {
+            Self::Space(SpaceEvent::Changed {
+                space_id: args.get(1).unwrap().parse::<u32>()?,
+                recent_space_id: args.get(2).unwrap().parse::<u32>()?,
+            })
+        } else if APPLICATION_VISIBLE == val {
+            Self::Application(ApplicationEvent::Visible)
+        } else if APPLICATION_HIDDEN == val {
+            Self::Application(ApplicationEvent::Hidden)
+        } else if MISSON_CONTROL_ENTER == val {
+            Self::MissionControl(MissionControlEvent::Enter)
+        } else if MISSON_CONTROL_EXIT == val {
+            Self::MissionControl(MissionControlEvent::Exit)
+        } else if DISPLAY_ADDED == val {
+            Self::Display(DisplayEvent::Added)
+        } else if DISPLAY_REMOVED == val {
+            Self::Display(DisplayEvent::Removed)
+        } else if DISPLAY_MOVED == val {
+            Self::Display(DisplayEvent::Moved)
+        } else if DISPLAY_RESIZED == val {
+            Self::Display(DisplayEvent::Resized)
+        } else if DISPLAY_CHANGED == val {
+            Self::Display(DisplayEvent::Changed)
+        } else {
+            Self::NotSupported
+        };
 
-    /// Returns `true` if the application event is [`Terminated`].
-    ///
-    /// i.e. an application got terminated.
-    ///
-    /// [`Terminated`]: ApplicationEvent::Terminated
-    // pub fn is_terminate_event(&self) -> bool {
-    //     matches!(self, Self::Terminated)
-    // }
-
-    /// Returns `true` if the application event is [`FrontSwitched`].
-    ///
-    /// i.e. an application became ontop?
-    ///
-    /// [`FrontSwitched`]: ApplicationEvent::FrontSwitched
-    // pub fn is_front_switch_event(&self) -> bool {
-    //     matches!(self, Self::FrontSwitched)
-    // }
-
-    /// Returns `true` if the application event is [`Activated`].
-    ///
-    /// i.e. an application got activated
-    ///
-    /// [`Activated`]: ApplicationEvent::Activated
-    // pub fn is_activate_event(&self) -> bool {
-    //     matches!(self, Self::Activated)
-    // }
-
-    /// Returns `true` if the application event is [`Deactivated`].
-    ///
-    /// i.e. an application got deactivated
-    ///
-    /// [`Deactivated`]: ApplicationEvent::Deactivated
-    pub fn is_deactivate_event(&self) -> bool {
-        matches!(self, Self::Deactivated)
+        match event {
+            Self::NotSupported => {
+                let event = std::str::from_utf8(&val)?;
+                bail!("Event {event} is not supported.")
+            }
+            _ => Ok(event),
+        }
     }
+}
 
-    /// Returns `true` if the application event is [`Visible`].
-    ///
-    /// i.e. an application got unhidden or made visible.
-    ///
-    /// [`Visible`]: ApplicationEvent::Visible
-    pub fn is_visible_event(&self) -> bool {
-        matches!(self, Self::Visible)
-    }
-
-    /// Returns `true` if the application event is [`Hidden`].
-    ///
-    /// i.e. an application got hidden.
-    ///
-    /// [`Hidden`]: ApplicationEvent::Hidden
-    pub fn is_hidden_event(&self) -> bool {
-        matches!(self, Self::Hidden)
+// TODO: better have this pre event
+impl fmt::Display for Event {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Event::NotSupported => write!(f, "Not Supported"),
+            Event::MissionControl(event) => {
+                let phase = if let MissionControlEvent::Enter = event {
+                    "Enter"
+                } else {
+                    "Exit"
+                };
+                write!(f, "Mission Control {phase}")
+            }
+            Event::Window(event) => match event {
+                WindowEvent::Created { window_id } => write!(f, "Window Created ({window_id})"),
+                WindowEvent::Destroyed { window_id } => {
+                    write!(f, "Window Destroyed: ({window_id})")
+                }
+                WindowEvent::Focused { window_id } => write!(f, "Window Focused: ({window_id})"),
+                WindowEvent::Moved { window_id } => write!(f, "Window Moved: ({window_id})"),
+                WindowEvent::Resized { window_id } => write!(f, "Window Resized: ({window_id})"),
+                WindowEvent::Minimized { window_id } => {
+                    write!(f, "Window Minimized: ({window_id})")
+                }
+                WindowEvent::Deminimized { window_id } => {
+                    write!(f, "Window Deminimized: ({window_id})")
+                }
+            },
+            Event::Display(event) => match event {
+                DisplayEvent::Added => write!(f, "Display Added"),
+                DisplayEvent::Removed => write!(f, "Display Removed"),
+                DisplayEvent::Moved => write!(f, "Display Moved"),
+                DisplayEvent::Resized => write!(f, "Display Resized"),
+                DisplayEvent::Changed => write!(f, "Display Changed"),
+            },
+            Event::Space(event) => match event {
+                SpaceEvent::Changed {
+                    space_id,
+                    recent_space_id,
+                } => write!(f, "Space Changed (r:{recent_space_id}, n:{space_id})"),
+            },
+            Event::Application(event) => match event {
+                // ApplicationEvent::Deactivated => write!(f, "Application Deactivated"),
+                ApplicationEvent::Visible => write!(f, "Application Visible"),
+                ApplicationEvent::Hidden => write!(f, "Application Hidden"),
+            },
+        }
     }
 }
