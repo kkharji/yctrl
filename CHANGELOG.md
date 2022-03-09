@@ -1,6 +1,24 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [unreleased]
+
+### <!-- 0 -->Features
+
+- <a href="https://github.com/tami5/yctrl/commit/77c07a77550bbec9d7554d1b8430f9b573c6cc66"><tt>77c07a7</tt></a> Support custom configuration
+- <a href="https://github.com/tami5/yctrl/commit/bf4a5f06cc02018c0d896ccabdf1df90e157c116"><tt>bf4a5f0</tt></a> Configure auto-close empty spaces
+- <a href="https://github.com/tami5/yctrl/commit/5dce08a4b3b92d5ff30d4b76d95a2032d5e2bc1e"><tt>5dce08a</tt></a> Keep focus with rules
+
+### <!-- 2 -->Refactor
+
+- <a href="https://github.com/tami5/yctrl/commit/d2bb654d88b9960ca8a9399fcc18f5dbc62e8e5e"><tt>d2bb654</tt></a> On space switch try focusing using mouse first
+- <a href="https://github.com/tami5/yctrl/commit/3712c4ffba4561b65d37da76da8e1b99712a2126"><tt>3712c4f</tt></a> Query interface
+- <a href="https://github.com/tami5/yctrl/commit/850e09d5d4cadcc91866d4112c462ce2a6a70621"><tt>850e09d</tt></a> Remove redundant code and test
+
+### Miscellaneous Tasks
+
+- <a href="https://github.com/tami5/yctrl/commit/9d2b697221e7d62de12d8c8c6cd25028e226b1fb"><tt>9d2b697</tt></a> Update docs
+
 ## [0.1.3] - 2022-03-06
 
 ### <!-- 0 -->Features
