@@ -48,20 +48,21 @@ async fn auto_focus_window(yabai: &Socket, space_id: &u32) -> Result<()> {
         return Ok(());
     }
 
-    let focus_window = windows.first().unwrap();
-    tracing::trace!("Switching focus to {}", focus_window.title);
+    if yabai.execute(&["window", "--focus", "mouse"]).await.is_err() {
+        let focus_window = windows.first().unwrap();
+        tracing::trace!("Switching focus to {}", focus_window.title);
 
-    let focus_window_id = focus_window.id.to_string();
-    let focus_args = &["window", "--focus", &focus_window_id];
-    let focus_result = yabai.execute(focus_args).await;
+        let focus_window_id = focus_window.id.to_string();
+        let focus_args = &["window", "--focus", &focus_window_id];
+        let focus_result = yabai.execute(focus_args).await;
 
-    if let Err(e) = focus_result {
-        tracing::error!(
-            "Unable to change focus to {}. Cause: {e}",
-            focus_window.title
-        )
-    }
-
+        if let Err(e) = focus_result {
+            tracing::error!(
+                "Unable to change focus to {}. Cause: {e}",
+                focus_window.title
+                )
+        }
+    };
     Ok(())
 }
 
