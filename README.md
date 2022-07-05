@@ -54,7 +54,7 @@ yctrl config window_topmost on # redirect to yabai socket
 ### Cargo
 
 ```bash
-cargo install --git https://github.com/tami5/yctrl
+cargo install --git https://github.com/kkharji/yctrl
 ```
 
 ### Flakes
@@ -62,7 +62,7 @@ cargo install --git https://github.com/tami5/yctrl
 ```nix
 {
   inputs = {
-    yctrl.url = "github:tami5/yctrl";
+    yctrl.url = "github:kkharji/yctrl";
     yctrl.inputs.nixpkgs.follows = "nixpkgs";
   };
   output = { self, ... }@inputs {
@@ -80,7 +80,7 @@ cargo install --git https://github.com/tami5/yctrl
 {
   nixpkgs.overlays = [
     (import (builtins.fetchTarball {
-      url = https://github.com/tami5/yctrl/archive/master.tar.gz;
+      url = https://github.com/kkharji/yctrl/archive/master.tar.gz;
     }))
   ];
 }
