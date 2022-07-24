@@ -36,20 +36,20 @@ async fn moved(_yabai: &Socket, _window_id: &u32) -> Result<()> {
     Ok(())
 }
 
-async fn focused(yabai: &Socket, window_id: &u32) -> Result<()> {
-    let space = yabai.focused_space().await?;
+async fn focused(_yabai: &Socket, _window_id: &u32) -> Result<()> {
+    // let space = yabai.focused_space().await?;
 
-    tracing::trace!("Current Focus: {:?}", window_id);
+    // tracing::trace!("Current Focus: {:?}", window_id);
 
-    if !space.windows.contains(window_id) {
-        tracing::warn!(
-            "Window no longer exists in current space. Switching to last window: {}",
-            space.last_window
-        );
-        yabai
-            .execute(&["window", "--focus", &format!("{}", space.last_window)])
-            .await?;
-    }
+    // if !space.windows.contains(window_id) {
+    //     tracing::warn!(
+    //         "Window no longer exists in current space. Switching to last window: {}",
+    //         space.last_window
+    //     );
+    //     yabai
+    //         .execute(&["window", "--focus", &format!("{}", space.last_window)])
+    //         .await?;
+    // }
 
     Ok(())
 }
