@@ -163,18 +163,46 @@ impl Window {
         let space = yabai.focused_space().await?;
 
         println!("Got yabai spaces");
-        // Should just change focus to next space window
-        // TODO: support moving window to next/prev space and delete current space empty??
+
         if space.first_window == space.last_window && &command == "--focus" {
             let windows = yabai.windows("current").await?;
-
+            println!("{windows:#?}");
             if windows.is_empty() {
                 println!("No windows left in space, trying {select} space instead of window");
                 let args = vec!["space".to_string(), command, select.to_string()];
                 return Space::handle(yabai, args).await;
-            } else {
-                let args = &["window", &command, &windows.first().unwrap().id.to_string()];
-                return yabai.execute(args).await;
+            } else if let Some(current_focused) = windows.iter().find(|w| w.has_focus) {
+                if let Some(current_index) =
+                    space.windows.iter().position(|&x| x == current_focused.id)
+                {
+                    println!("current_index: {current_index:?}");
+                    let idx = if select == "next" {
+                        let idx = current_index + 1;
+                        if idx > space.windows.len() - 1 {
+                            0
+                        } else {
+                            idx
+                        }
+                    } else {
+                        if current_index == 0 {
+                            space.windows.len() - 1
+                        } else {
+                            let idx = current_index - 1;
+                            if idx > 0 {
+                                idx
+                            } else {
+                                space.windows.len() - 1
+                            }
+                        }
+                    };
+                    if let Some(id) = space.windows.get(idx) {
+                        let args = &["window", &command, &id.to_string()];
+                        println!("{args:?}");
+                        return yabai.execute(args).await;
+                    } else {
+                        eprintln!("{idx} is invalid index: {:?}", space.windows);
+                    }
+                };
             }
         }
 
