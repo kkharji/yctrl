@@ -26,17 +26,23 @@ impl Socket {
     /// Send given arguments to yabai and return a stream for further processing
     async fn send<A: AsRef<[u8]>>(self: &Self, args: &[A]) -> Result<UnixStream> {
         let mut stream = UnixStream::connect(&self.socket_path).await?;
-        stream.writable().await?;
 
+        stream.writable().await?;
+        let mut command = Vec::from([0x0, 0x0, 0x0, 0x0]);
         for arg in args.iter().map(AsRef::as_ref) {
-            if arg.contains(&b'\0') {
+            if arg.contains(&0x0) {
                 bail!("Internal: Unexpected NUL byte in arg: {arg:?}");
             }
-            stream.write_all(arg).await?;
-            stream.write_all(b"\0").await?;
+            command.extend_from_slice(arg);
+            command.push(0x0)
         }
-        stream.write_all(b"\0").await?;
+
+        command.push(0x0);
+        command[0] = (command.len() - 4) as u8;
+
+        stream.write_all(&command).await?;
         stream.flush().await?;
+
         Ok(stream)
     }
 
