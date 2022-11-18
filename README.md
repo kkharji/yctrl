@@ -21,7 +21,9 @@ yctrl window focus next
 - `focus next/prev`: If current space has only one window then window next would go to next/prev space window
 - `event`: Auto close empty spaces.
 - `event`: keep focus in current space last window. (space change, new window in different space, window destroy)
-- `scratchpad`: toggle a pre-defeined scratchpad (gird are configured globally '<rows>:<cols>:<start-x>:<start-y>:<width>:<height>')
+- `scratchpad`: toggle a pre-defeined scratchpad (gird are configured globally
+ '\<rows\>:\<cols\>:\<start-x\>:\<start-y\>:\<width\>:\<height\>'
+- Auto switch focus to last window on window destory/minimize/hide
 
 ## Someday
 
@@ -30,6 +32,7 @@ yctrl window focus next
 - [ ] Move to next/prev space should auto created space if it doesn't exists
 - [ ] Maintain internal state of yabai objects
 - [ ] Improve next/prev to account for floating and unmanaged windows?
+- [x] Improve next/prev to account for floating and unmanaged windows?
 - [x] Make side-effects configurable.
 
 ## Setup
@@ -44,6 +47,8 @@ send() {; echo "echo event $@ | nc -U -w 1 /tmp/yctrl.socket"; }
 
 yabai -m signal --add event='space_changed' action=$(send 'space_changed $YABAI_SPACE_ID $YABAI_RECENT_SPACE_ID')
 yabai -m signal --add event='window_destroyed' action=$(send 'window_destroyed $YABAI_WINDOW_ID')
+yabai -m signal --add event='application_hidden' action=$(send 'application_hidden $YABAI_WINDOW_ID')
+yabai -m signal --add event='window_destroyed'action=$(send 'window_destroyed $YABAI_WINDOW_ID')
 
 yctrl config yctrl_auto_close_empty_spaces false # Disable auto close of empty spaces
 yctrl config window_topmost on # redirect to yabai socket
