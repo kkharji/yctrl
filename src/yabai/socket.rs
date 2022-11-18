@@ -104,9 +104,12 @@ impl Socket {
         self.query::<Space, _>(QUERY_GET_FOCUSED_SPACE).await
     }
 
-    #[allow(dead_code)]
     pub async fn focused_window(self: &Self) -> Result<Window> {
         self.query::<Window, _>(QUERY_GET_FOCUSED_WINDOW).await
+    }
+    pub async fn last_window(&self) -> Result<Window> {
+        self.query::<Window, _>(&["query", "--windows", "--window", "last"])
+            .await
     }
 
     pub async fn spaces(self: &Self, _display: &str) -> Result<Vec<Space>> {

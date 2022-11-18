@@ -24,8 +24,15 @@ async fn deminimzed(_yabai: &Socket, _window_id: &u32) -> Result<()> {
     Ok(())
 }
 
-async fn minimized(_yabai: &Socket, _window_id: &u32) -> Result<()> {
-    Ok(())
+async fn minimized(yabai: &Socket, _window_id: &u32) -> Result<()> {
+    let last_window_id = yabai.last_window().await?.id;
+    yabai
+        .execute(&[
+            "window".to_string(),
+            "--focus".into(),
+            format!("{last_window_id}"),
+        ])
+        .await
 }
 
 async fn resized(_yabai: &Socket, _window_id: &u32) -> Result<()> {

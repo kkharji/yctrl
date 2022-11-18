@@ -1,4 +1,4 @@
-use crate::config::Config;
+use crate::{config::Config, yabai};
 use anyhow::{bail, Result};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -20,9 +20,10 @@ impl Default for State {
 pub type SharedState = Arc<Mutex<State>>;
 
 impl State {
-    pub fn handle(&mut self, mut args: Vec<&str>) -> Result<()> {
+    pub async fn handle(&mut self, mut args: Vec<&str>) -> Result<()> {
         let key = args.remove(0);
         let value = args.get(1).unwrap();
+        let yabai = yabai::Socket::new()?;
         tracing::info!("config set: {:?} ", args);
 
         match key {
@@ -40,6 +41,14 @@ impl State {
             }
             "yctrl_scratchpads" => {
                 self.config.set_scratchpads_with_str(&args.join(" "))?;
+                for configure_args in self
+                    .config
+                    .scratchpads()
+                    .iter()
+                    .map(|sp| sp.configure_args(&self.config))
+                {
+                    yabai.request(&configure_args).await?;
+                }
             }
 
             _ => bail!("Unknown config key {key}"),

@@ -54,11 +54,17 @@ yctrl config yctrl_scratchpad_space 8
 yctrl config yctrl_scratchpad_grid "6:4:1:1:2:4"
 yctrl config yctrl_scratchpads '[
   {
-    tag: "alacritty", kind: "title", target: "TermScratchpad", command: "open -a Alacritty.app --title TermScratchpad"
+    tag: "alacritty",
+    kind: "title",
+    target: "TermScratchpad",
+    command: ["open", "-a", "Alacritty.app", "--title", "TermScratchpad"]
   },
   {
-    tag: "discord", kind: "app", target: "Discord", command: "open -a Discord.app"
-  }
+    tag: "discord",
+    kind: "app",
+    target: "Discord",
+    command: ["open", "-a", "Discord.app"]
+  },
 ]'
 ```
 

@@ -1,5 +1,6 @@
+use crate::scratchpad::ScratchpadEvent;
 use crate::state::{SharedState, State};
-use crate::yabai::Event;
+use crate::yabai::{ApplicationEvent, Event};
 use anyhow::{bail, Context, Ok, Result};
 use async_trait::async_trait;
 use rand::rngs::StdRng;
@@ -27,6 +28,10 @@ impl EventHandler for Event {
         match self {
             Event::Window(e) => e.handle(state).await,
             Event::Space(s) => s.handle(state).await,
+            Event::Application(ApplicationEvent::Hidden) => {
+                tracing::trace!("Hidden window");
+                Ok(())
+            }
             _ => {
                 bail!("{:?} is not supported.", self)
             }
@@ -65,40 +70,49 @@ async fn handle(mut s: UnixStream, state: SharedState) -> Result<()> {
 
     s.read_to_string(&mut response).await?;
 
-    let mut arguments: Vec<&str> = response.trim().split_whitespace().collect();
+    let mut args: Vec<&str> = response.trim().split_whitespace().collect();
 
     // Get Request type
-    let rtype: &str = arguments.remove(0);
+    let rtype: &str = args.remove(0);
 
     let span = tracing::trace_span!("Request", "[{}]", id);
 
     match rtype {
         "event" => {
-            let event = Event::try_from(arguments)?;
+            let event = Event::try_from(args)?;
             tracing::event!(parent: &span, Level::DEBUG, "{}", event);
-            event.handle(state).await
+            event.handle(state).await?;
         }
         "config" => {
-            tracing::event!(parent: &span, Level::DEBUG, "Updating configuration");
-            state.lock().await.handle(arguments)?;
+            tracing::event!(parent: &span, Level::INFO, "Updating configuration");
+            state.lock().await.handle(args).await?;
 
             tracing::event!(
                 parent: &span,
-                Level::DEBUG,
+                Level::INFO,
                 "New Configuration: {:#?}",
                 state.lock().await.config
             );
-            return Ok(());
+        }
+        "scratchpad" => {
+            let tag = args.remove(0);
+            tracing::event!(parent: &span, Level::INFO, "Toggling scratchpad: {tag}");
+            ScratchpadEvent::toggle(state, tag).await?;
         }
         _ => {
             bail!("Request type: '{rtype}' is not supported.")
         }
     }
+
+    Ok(())
 }
 
 fn configure_tracing_subscriber() -> Result<()> {
+    use tracing::metadata::LevelFilter;
     use tracing::subscriber::set_global_default;
     use tracing_appender::rolling;
+    use tracing_subscriber::fmt::format::FmtSpan;
+    use tracing_subscriber::fmt::writer::MakeWriterExt;
     use tracing_subscriber::fmt::Layer;
     use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
 
