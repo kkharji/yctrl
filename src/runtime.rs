@@ -10,8 +10,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{UnixListener, UnixStream};
 use tokio::sync::Mutex;
 use tracing::Level;
-use tracing_subscriber::fmt::format::FmtSpan;
-use tracing_subscriber::EnvFilter;
+
 mod space_event;
 mod window_event;
 
@@ -98,16 +97,45 @@ async fn handle(mut s: UnixStream, state: SharedState) -> Result<()> {
 }
 
 fn configure_tracing_subscriber() -> Result<()> {
-    // Configure tracing_subscriber
-    tracing_subscriber::fmt()
-        // Filter what traces are displayed based on RUST_LOG var: `RUST_LOG=chat=trace`
-        .with_env_filter(EnvFilter::from_default_env())
-        // Log events when `tracing` spans are created, entered, existed, or closed.
+    use tracing::subscriber::set_global_default;
+    use tracing_appender::rolling;
+    use tracing_subscriber::fmt::Layer;
+    use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
+
+    use tracing_subscriber::{registry, EnvFilter};
+    let fmt_file = Layer::new()
+        .with_writer(rolling::never("/tmp", "yctrl.log").with_max_level(Level::INFO))
+        .with_target(false)
+        .with_thread_names(false)
+        .without_time()
+        .with_span_events(FmtSpan::CLOSE)
+        .with_thread_ids(false);
+
+    let fmt_stdout = Layer::new()
+        .with_writer(std::io::stdout)
         .with_span_events(FmtSpan::CLOSE)
         .with_target(false)
-        // Set this subscriber as the default, to collect all traces emitted by the programmer.
-        .init();
+        .with_line_number(true)
+        .without_time();
 
+    set_global_default(
+        registry()
+            .with(
+                EnvFilter::try_from_default_env()
+                    .map(|d| {
+                        d.add_directive("tokio::net=trace".parse().unwrap())
+                            .add_directive("yctrl=trace".parse().unwrap())
+                    })
+                    .unwrap_or_else(|_| {
+                        EnvFilter::builder()
+                            .with_default_directive(LevelFilter::INFO.into())
+                            .parse("")
+                            .unwrap()
+                    }),
+            )
+            .with(fmt_file)
+            .with(fmt_stdout),
+    )?;
     Ok(())
 }
 
