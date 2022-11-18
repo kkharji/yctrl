@@ -86,7 +86,7 @@ async fn handle(mut s: UnixStream, state: SharedState) -> Result<()> {
             tracing::event!(
                 parent: &span,
                 Level::DEBUG,
-                "New Configuration: {:?}",
+                "New Configuration: {:#?}",
                 state.lock().await.config
             );
             return Ok(());

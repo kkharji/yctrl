@@ -1,9 +1,12 @@
+mod config;
 mod constants;
 mod runtime;
+mod scratchpad;
 mod state;
 mod yabai;
 
 use anyhow::{anyhow, bail, Result};
+use scratchpad::ScratchpadService;
 use std::env;
 use std::fmt::Debug;
 
@@ -58,6 +61,7 @@ async fn main() -> Result<()> {
     match args[0].as_str() {
         "window" => Window::handle(&yabai, args).await,
         "space" => Space::handle(&yabai, args).await,
+        "scratchpad" => ScratchpadService::handle(&yabai, args).await,
         "config" => {
             if args[1].as_str().contains("yctrl") {
                 runtime::execute(&args).await

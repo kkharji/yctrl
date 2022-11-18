@@ -21,6 +21,7 @@ yctrl window focus next
 - `focus next/prev`: If current space has only one window then window next would go to next/prev space window
 - `event`: Auto close empty spaces.
 - `event`: keep focus in current space last window. (space change, new window in different space, window destroy)
+- `scratchpad`: toggle a pre-defeined scratchpad (gird are configured globally '<rows>:<cols>:<start-x>:<start-y>:<width>:<height>')
 
 ## Someday
 
@@ -43,10 +44,22 @@ send() {; echo "echo event $@ | nc -U -w 1 /tmp/yctrl.socket"; }
 
 yabai -m signal --add event='space_changed' action=$(send 'space_changed $YABAI_SPACE_ID $YABAI_RECENT_SPACE_ID')
 yabai -m signal --add event='window_destroyed' action=$(send 'window_destroyed $YABAI_WINDOW_ID')
-# Disable auto close of empty spaces
-yctrl config  yctrl_auto_close_empty_spaces false
+
+yctrl config yctrl_auto_close_empty_spaces false # Disable auto close of empty spaces
 yctrl config window_topmost on # redirect to yabai socket
 
+# Scratchpad (definition are written json5) (special thanks to @arpandaze)
+yctrl config yctrl_scratchpad_launch_timeout 10
+yctrl config yctrl_scratchpad_space 8
+yctrl config yctrl_scratchpad_grid "6:4:1:1:2:4"
+yctrl config yctrl_scratchpads '[
+  {
+    tag: "alacritty", kind: "title", target: "TermScratchpad", command: "open -a Alacritty.app --title TermScratchpad"
+  },
+  {
+    tag: "discord", kind: "app", target: "Discord", command: "open -a Discord.app"
+  }
+]'
 ```
 
 ## Installation

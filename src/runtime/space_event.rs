@@ -19,7 +19,7 @@ impl EventHandler for SpaceEvent {
             } => {
                 // TODO: Make it configurable
                 auto_focus_window(&yabai, space_id).await?;
-                if config.auto_close_empty_spaces {
+                if *config.auto_close_empty_spaces() {
                     destory_recent_space_when_empty(&yabai, recent_space_id).await?;
                 }
                 Ok(())

@@ -1,30 +1,18 @@
+use crate::config::Config;
 use anyhow::{bail, Result};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-#[derive(Debug)]
-pub struct Config {
-    /// Whether to auto close empty spaces.
-    /// default: true
-    pub auto_close_empty_spaces: bool,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            auto_close_empty_spaces: true,
-        }
-    }
-}
-
 pub struct State {
     pub config: Config,
+    pub scratchpad_open: bool,
 }
 
 impl Default for State {
     fn default() -> Self {
         Self {
             config: Config::default(),
+            scratchpad_open: false,
         }
     }
 }
@@ -32,14 +20,29 @@ impl Default for State {
 pub type SharedState = Arc<Mutex<State>>;
 
 impl State {
-    pub fn handle(&mut self, arguemnts: Vec<&str>) -> Result<()> {
-        let key = arguemnts.get(0).unwrap();
-        let value = arguemnts.get(1).unwrap();
+    pub fn handle(&mut self, mut args: Vec<&str>) -> Result<()> {
+        let key = args.remove(0);
+        let value = args.get(1).unwrap();
+        tracing::info!("config set: {:?} ", args);
 
-        if key == &"yctrl_auto_close_empty_spaces" {
-            self.config.auto_close_empty_spaces = value.parse::<bool>()?;
-        } else {
-            bail!("Unknown config key {key}")
+        match key {
+            "yctrl_auto_close_empty_spaces" => {
+                self.config.set_auto_close_empty_spaces_with_str(value)?;
+            }
+            "yctrl_scratchpad_launch_timeout" => {
+                self.config.set_scratchpad_launch_timeout_with_str(value)?;
+            }
+            "yctrl_scratchpad_space" => {
+                self.config.set_scratchpad_space_with_str(value)?;
+            }
+            "yctrl_scratchpad_grid" => {
+                self.config.set_scratchpad_grid_with_str(value)?;
+            }
+            "yctrl_scratchpads" => {
+                self.config.set_scratchpads_with_str(&args.join(" "))?;
+            }
+
+            _ => bail!("Unknown config key {key}"),
         }
 
         Ok(())

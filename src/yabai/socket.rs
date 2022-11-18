@@ -104,6 +104,7 @@ impl Socket {
         self.query::<Space, _>(QUERY_GET_FOCUSED_SPACE).await
     }
 
+    #[allow(dead_code)]
     pub async fn focused_window(self: &Self) -> Result<Window> {
         self.query::<Window, _>(QUERY_GET_FOCUSED_WINDOW).await
     }
