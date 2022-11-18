@@ -45,7 +45,7 @@ async fn main() -> Result<()> {
         command_pos = 2;
     }
 
-    if args[0].as_str() != "config" {
+    if args[0].as_str() != "config" && args[0].as_str() != "scratchpad" {
         // Correct format: Note should maybe check if it's already correct
         let command = args.get_mut(command_pos).unwrap();
         let cmd = command.clone();
@@ -59,8 +59,8 @@ async fn main() -> Result<()> {
 
     // Handle User request
     match args[0].as_str() {
-        "window" => Window::handle(&yabai, args).await,
-        "space" => Space::handle(&yabai, args).await,
+        "window" => WindowService::handle(&yabai, args).await,
+        "space" => SpaceService::handle(&yabai, args).await,
         "scratchpad" => ScratchpadService::handle(&yabai, args).await,
         "config" => {
             if args[1].as_str().contains("yctrl") {
@@ -73,8 +73,8 @@ async fn main() -> Result<()> {
     }
 }
 
-struct Window();
-impl Window {
+struct WindowService();
+impl WindowService {
     async fn space(yabai: &yabai::Socket, args: Vec<String>) -> Result<()> {
         let select = args.last().unwrap();
         let command = args[1].clone();
@@ -82,18 +82,18 @@ impl Window {
 
         // Only further process next/prev, if not run the command as it.
         if select != "next" && select != "prev" && yabai.execute(&args).await.is_ok() {
-            return Space::handle(yabai, space_args).await;
+            return SpaceService::handle(yabai, space_args).await;
         }
 
         // Try to execute as is
         if yabai.execute(&args).await.is_ok() {
-            return Space::handle(yabai, space_args).await;
+            return SpaceService::handle(yabai, space_args).await;
         }
 
         // Try position rather than order
         let pos = if select == "next" { "first" } else { "last" };
         if yabai.execute(&["window", &command, pos]).await.is_ok() {
-            return Space::handle(yabai, space_args).await;
+            return SpaceService::handle(yabai, space_args).await;
         }
 
         bail!("Fail handle space command!!! {:?}", args)
@@ -174,7 +174,7 @@ impl Window {
             if windows.is_empty() {
                 println!("No windows left in space, trying {select} space instead of window");
                 let args = vec!["space".to_string(), command, select.to_string()];
-                return Space::handle(yabai, args).await;
+                return SpaceService::handle(yabai, args).await;
             } else if let Some(current_focused) = windows.iter().find(|w| w.has_focus) {
                 if let Some(current_index) =
                     space.windows.iter().position(|&x| x == current_focused.id)
@@ -228,8 +228,8 @@ impl Window {
     }
 }
 
-struct Space();
-impl Space {
+struct SpaceService();
+impl SpaceService {
     async fn handle(yabai: &yabai::Socket, args: Vec<String>) -> Result<()> {
         let select = args.last().unwrap();
 
