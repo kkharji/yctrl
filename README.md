@@ -36,6 +36,7 @@ yctrl window focus next
   - [ ] Moving mouse from scratchpad automatically hides it.
   - [ ] Have scratchpad window appear in all spaces (now switches to space where it has the
     scratchpad)
+  - [ ] toggle last
 - Bugs
   - [ ] Fix installation by nix overlay
   - [ ] Only switch focus to last window if current isn't hover
