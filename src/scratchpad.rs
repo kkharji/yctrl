@@ -1,4 +1,5 @@
 use crate::config::Config;
+use crate::util::window_hide_current;
 use crate::yabai::Socket;
 use crate::{state::SharedState, yabai};
 use anyhow::{bail, Result};
@@ -59,7 +60,11 @@ impl ScratchpadEvent {
         tracing::debug!("{sp:#?}");
 
         let window = yabai.focused_window().await?;
-        tracing::debug!("{window:#?}");
+        if window.is_floating {
+            window_hide_current().await?;
+        }
+
+        tracing::info!("Focused on {:#?}", window);
 
         let target = if sp.kind.is_app() {
             window.app
@@ -67,16 +72,7 @@ impl ScratchpadEvent {
             window.title
         };
 
-        if target == sp.target {
-            // minimize it
-            yabai
-                .execute(&[
-                    "window".to_string(),
-                    format!("{}", window.id),
-                    "--minimize".into(),
-                ])
-                .await?;
-        } else {
+        if target != sp.target {
             let mut args = sp.command.clone();
             let cmd = args.remove(0);
             tracing::info!("running: {:?} with {:?}", cmd, args);

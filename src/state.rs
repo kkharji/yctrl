@@ -24,7 +24,6 @@ impl State {
         let key = args.remove(0);
         let value = args.get(1).unwrap();
         let yabai = yabai::Socket::new()?;
-        tracing::info!("config set: {:?} ", args);
 
         match key {
             "yctrl_auto_close_empty_spaces" => {

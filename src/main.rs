@@ -3,6 +3,7 @@ mod constants;
 mod runtime;
 mod scratchpad;
 mod state;
+mod util;
 mod yabai;
 
 use anyhow::{anyhow, bail, Result};
