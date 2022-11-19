@@ -54,8 +54,6 @@ yctrl config yctrl_auto_close_empty_spaces false # Disable auto close of empty s
 yctrl config window_topmost on # redirect to yabai socket
 
 # Scratchpad (definition are written json5) (special thanks to @arpandaze)
-yctrl config yctrl_scratchpad_launch_timeout 10
-yctrl config yctrl_scratchpad_space 8
 yctrl config yctrl_scratchpad_grid "6:4:1:1:2:4"
 yctrl config yctrl_scratchpads '[
   {

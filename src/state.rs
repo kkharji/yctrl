@@ -29,12 +29,6 @@ impl State {
             "yctrl_auto_close_empty_spaces" => {
                 self.config.set_auto_close_empty_spaces_with_str(value)?;
             }
-            "yctrl_scratchpad_launch_timeout" => {
-                self.config.set_scratchpad_launch_timeout_with_str(value)?;
-            }
-            "yctrl_scratchpad_space" => {
-                self.config.set_scratchpad_space_with_str(value)?;
-            }
             "yctrl_scratchpad_grid" => {
                 self.config.set_scratchpad_grid_with_str(value)?;
             }

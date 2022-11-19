@@ -1,7 +1,7 @@
 use crate::config::Config;
+use crate::state::SharedState;
 use crate::util::window_hide_current;
 use crate::yabai::Socket;
-use crate::{state::SharedState, yabai};
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
