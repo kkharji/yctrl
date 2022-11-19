@@ -24,17 +24,21 @@ yctrl window focus next
 - `scratchpad`: toggle (hide/unhide) a pre-defeined scratchpad (configured by grid
  '\<rows\>:\<cols\>:\<start-x\>:\<start-y\>:\<width\>:\<height\>'
 - Auto-switch focus to last window on window destory/minimize/hide
--
 
 ## Someday
 
-- [ ] Fix installation by nix overlay
-- [ ] Auto create space by id if it doesn't exists.
-- [ ] Move to next/prev space should auto created space if it doesn't exists
-- [ ] Maintain internal state of yabai objects
-- [ ] Moving mouse from scratchpad automatically hides it.
-- [x] Improve next/prev to account for floating and unmanaged windows?
-- [x] Make side-effects configurable.
+- Ergonomics
+  - [ ] Move to next/prev space should auto created space if it doesn't exists
+  - [ ] Auto create space by id if it doesn't exists.
+- Control and Access
+  - [ ] Maintain internal state of yabai objects
+- Scratchpad
+  - [ ] Moving mouse from scratchpad automatically hides it.
+  - [ ] Have scratchpad window appear in all spaces (now switches to space where it has the
+    scratchpad)
+- Bugs
+  - [ ] Fix installation by nix overlay
+  - [ ] Only switch focus to last window if current isn't hover
 
 ## Setup
 
