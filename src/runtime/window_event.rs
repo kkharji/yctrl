@@ -29,15 +29,23 @@ async fn deminimzed(_yabai: &Socket, _window_id: &u32) -> Result<()> {
     Ok(())
 }
 
-async fn focus_last(yabai: &Socket, _window_id: &u32) -> Result<()> {
-    let last_window_id = yabai.last_window().await?.id;
-    yabai
-        .execute(&[
-            "window".to_string(),
-            "--focus".into(),
-            format!("{last_window_id}"),
-        ])
-        .await
+async fn focus_last(yabai: &Socket, window_id: &u32) -> Result<()> {
+    let current_window = yabai.window_by_id("current", window_id).await?;
+    let last_window = yabai.last_window().await?;
+    let last_window_id = last_window.id;
+    tracing::debug!("{last_window:?}");
+    tracing::debug!("{current_window:?}");
+
+    if current_window.is_some() {
+        yabai
+            .execute(&[
+                "window".to_string(),
+                "--focus".into(),
+                format!("{last_window_id}"),
+            ])
+            .await?
+    }
+    Ok(())
 }
 
 async fn resized(_yabai: &Socket, _window_id: &u32) -> Result<()> {

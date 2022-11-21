@@ -132,4 +132,17 @@ impl Socket {
             .filter(|w| w.subrole != "AXUnknown.Hammerspoon" && !w.is_minimized && !w.is_hidden)
             .collect())
     }
+
+    pub async fn window_by_id(self: &Self, space: &str, id: &u32) -> Result<Option<Window>> {
+        let windows = if space == "current" {
+            self.query::<Vec<Window>, _>(QUERY_GET_SPACE_WINDOWS)
+                .await?
+        } else if space == "all" {
+            self.query::<Vec<Window>, _>(QUERY_GET_ALL_WINDOWS).await?
+        } else {
+            self.query::<Vec<Window>, _>(&["query", "--windows", "--space", space])
+                .await?
+        };
+        Ok(windows.into_iter().find(|w| &w.id == id))
+    }
 }
